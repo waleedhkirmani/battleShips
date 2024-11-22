@@ -1,0 +1,33 @@
+﻿  MainWindow.cpp
+  Source.cpp
+  whiteAlternate.cpp
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,40): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,40): warning C4244:         with
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,40): warning C4244:         [
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,40): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,40): warning C4244:         ]
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,33): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,33): warning C4244:         with
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,33): warning C4244:         [
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,33): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(137,33): warning C4244:         ]
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,42): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,42): warning C4244:         with
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,42): warning C4244:         [
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,42): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,42): warning C4244:         ]
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,30): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,30): warning C4244:         with
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,30): warning C4244:         [
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,30): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(138,30): warning C4244:         ]
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(150,71): error C2572: 'drawBoard': redefinition of default argument: parameter 1
+      C:\Users\user\source\repos\sfml\whiteAlternate.cpp(19,6):
+      see declaration of 'drawBoard'
+  
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(150,87): error C2572: 'drawBoard': redefinition of default argument: parameter 2
+      C:\Users\user\source\repos\sfml\whiteAlternate.cpp(19,6):
+      see declaration of 'drawBoard'
+  
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(161,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\whiteAlternate.cpp(162,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
