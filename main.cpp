@@ -1,4 +1,5 @@
 #include <iostream>
+#include<cmath>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
@@ -12,18 +13,20 @@ using namespace sf;
 //function definitions:
 
 void openWindow(RenderWindow& window, Texture& mainBgTexture, Font& mainFont,int array[10][10]);
-int loadShips();
+int loadEverything();
 int handleEvents(RenderWindow& window, int array[10][10], int screenManager);
 void drawMainScreen(RenderWindow& window, Texture& mainBgTexture, Font& mainFont);
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal);
 void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager);
 bool drawBoard(RenderWindow& window, int array[10][10], int height = 10, int width = 10);
 void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height);
+void gamePlayScreen();
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
 FloatRect playGlobal;
 FloatRect leaderboardGlobal;
 FloatRect exitGlobal;
+FloatRect shipSetPlayGlobal;
 
 //FloatRect largestShipGlobal;
 //FloatRect largeShipGlobal;
@@ -40,6 +43,17 @@ Font mainFont;
 Texture mainBgTexture;
 Texture setShips;
 
+
+//JUST to show the grid in the form of array on console
+void shipsInArray(int array[10][10], int rows = 10, int columns = 10) {
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < columns; j++) {
+			cout << array[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
 int main() {
 
 
@@ -50,39 +64,44 @@ int main() {
 
 	//Loading Textures & Fonts
 	
-	if (!mainBgTexture.loadFromFile("MainMenuFinalBg.png"))
-	{
-		return 0;
-	}
-	
-	if (!setShips.loadFromFile("Set Ships.png"))
-	{
-		return 0;
-	}
-
-	if (!mainFont.loadFromFile("Paul-le1V.ttf"))
-	{
-		return 0;
-	}
-
-	if (loadShips() == -1)
+	if (loadEverything() == -1)
 		return 0;
 	
 	
 	int array[10][10] = {0};
+
 	//opens the main menu
 	openWindow(window, mainBgTexture, mainFont, array);
 
+
+	shipsInArray(array);
 }
 
-int loadShips() {
+int loadEverything() {
 	if (!ship4.loadFromFile("5ship.png") || !ship3.loadFromFile("4ship.png") || !ship2.loadFromFile("3ship.png") || !ship1.loadFromFile("2ship.png"))
 	{
 		cout << "Ships not Loaded";
 		return -1;
 	}
+	if (!mainBgTexture.loadFromFile("MainMenuFinalBg.png"))
+	{
+		return -1;
+	}
+
+	if (!setShips.loadFromFile("Set Ships.png"))
+	{
+		return -1;
+	}
+
+	if (!mainFont.loadFromFile("Paul-le1V.ttf"))
+	{
+		return -1;
+	}
+
 	return 0;
 }
+
+//Sets the button at center of screen in accordance to width
 
 int centerAlign(int screenWidth, int width) {
 	int center = (screenWidth / 2) - (width / 2);
@@ -116,16 +135,16 @@ void shipCreator() {
 
 
 	//Setting the current ship size
-	largestShip.scale((currentSizeX - difference) / 50, currentSizeY / 50);
-	largeShip.scale((currentSizeX - difference) / 50, currentSizeY / 50);
-	smallestShip.scale((currentSizeX - difference) / 50, currentSizeY / 50);
-	smallShip.scale((currentSizeX - difference)/ 50, currentSizeY / 50);
+	largestShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	largeShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	smallestShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	smallShip.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
 	
 	//making ships vertical for assembly
-	largestShip.setRotation(90);
-	largeShip.setRotation(90);
-	smallShip.setRotation(90);
-	smallestShip.setRotation(90);
+	largestShip.setRotation(450);
+	largeShip.setRotation(450);
+	smallShip.setRotation(450);
+	smallestShip.setRotation(450);
 
 
 	largestShip.setPosition(Vector2f(x += 100, desktop.height / 2.0));
@@ -133,7 +152,9 @@ void shipCreator() {
 	smallShip.setPosition(Vector2f(x += 200, desktop.height / 2.0));
 	smallestShip.setPosition(Vector2f(x += 200, desktop.height / 2.0));
 
+
 }
+
 
 
 //Contains The Game Loop
@@ -155,6 +176,9 @@ void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, 
 	case 1:
 		drawBoard(window, array, 10, 10);
 		break;
+	case 2:
+		gamePlayScreen();
+		break;
 	}
 }
 
@@ -162,7 +186,25 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
+
+	VideoMode desktopsize = VideoMode::getDesktopMode();
+	int screenwidth = desktopsize.width;
+	int screenheight = desktopsize.height;
+
+	float boxsize = screenwidth / 24.836;
+	float actualboxsize = screenwidth / 30.355;
+
+
+	int startingPointX = (screenwidth / 2);
+	int startingPointY = (screenheight / 2) - (boxsize * 5);
+
+
+	
+
+
 	if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
+
+
 		if (largestShip.getGlobalBounds().contains(mousePos)) {
 			draggedShip = &largestShip;
 		}
@@ -182,13 +224,70 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 		}
 	}
 
+
+
 	if (beingDragged && draggedShip && event.type == Event::MouseMoved) {
 		draggedShip->setPosition(mousePos - offset);
 	}
+
+		
+
 	if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
-		beingDragged = false;
-		draggedShip = nullptr;
+		if (draggedShip) {
+				FloatRect bounds = draggedShip->getGlobalBounds();
+				Vector2f topLeft(bounds.left, bounds.top);
+
+				float snappedX = round((topLeft.x - startingPointX) / boxsize) * boxsize + startingPointX;
+				float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
+
+				draggedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+
+				beingDragged = false;
+				draggedShip = nullptr;
+			}
+		}
+
+
+
+	if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Right) {
+		Sprite* selectedShip = nullptr;
+
+		// Determine which ship to rotate
+		if (largestShip.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &largestShip;
+		}
+		else if (largeShip.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &largeShip;
+		}
+		else if (smallShip.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &smallShip;
+		}
+		else if (smallestShip.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &smallestShip;
+		}
+
+		if (selectedShip) {
+			// Rotate the ship by 90 degrees
+			if (selectedShip->getRotation() == 90)
+				selectedShip->rotate(90);
+			else
+				selectedShip->rotate(-90);
+
+			Vector2f shipPos = selectedShip->getPosition();
+			FloatRect bounds = selectedShip->getGlobalBounds();
+
+			Vector2f topLeft(bounds.left, bounds.top);
+
+			float snappedX = round((topLeft.x - startingPointX) / boxsize) * boxsize + startingPointX;
+			float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
+
+			selectedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+		}
 	}
+
+	
+
+
 	drawBoard(window, array);
 }
 
@@ -200,7 +299,16 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 			window.close();
 
 		if (screenManager == 1)
+		{
 			handleDrag(window, event, array, 10, 10);
+			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
+				Vector2i mousePos = Mouse::getPosition(window);
+				if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
+					screenManager = 2;
+				}
+
+			}
+		}
 
 		if (screenManager == 0) {
 		if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
@@ -235,7 +343,6 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 	window.display();
 }
 
-//Used in the makeButtons Function. Sets the button at center of screen
 
 //Called in the makeButtons Function. Displays and Aligns the Text
 void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height) {
@@ -275,13 +382,6 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 	return button.getGlobalBounds();
 }
 
-void drawShip(RenderWindow& window){
-	window.draw(largestShip);
-	window.draw(largeShip);
-	window.draw(smallShip);
-	window.draw(smallestShip);
-
-}
 
 bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 
@@ -298,19 +398,30 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	int screenheight = desktopsize.height;
 
 	float actualboxsize = screenwidth / 30.355 ;
-	RectangleShape rect(Vector2f(actualboxsize, actualboxsize));
-
 	float boxsize = screenwidth / 24.836;
-	int startingPointX = screenwidth / 2; // (screenwidth * 3 / 4) - (boxsize * 5);
+	RectangleShape rect(Vector2f(boxsize, boxsize));
+
+	
+	int startingPointX = screenwidth / 2; 
 	int startingPointY = (screenheight / 2) - (boxsize * 5);
 
 	// Drawing our grid
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX + (boxsize * j), startingPointY + (boxsize * i)));
-			if (array[i][j] == 0) {
+			if(array[i][j] == 0)
 				rect.setFillColor(Color(25, 25, 25, 255));
-			}
+			else
+				rect.setFillColor(Color(50, 50, 100, 255)); //Blue Shade for when ship is placed
+
+			if (largestShip.getGlobalBounds().intersects(rect.getGlobalBounds())
+				|| largeShip.getGlobalBounds().intersects(rect.getGlobalBounds())
+				|| smallShip.getGlobalBounds().intersects(rect.getGlobalBounds())
+				|| smallestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
+				array[i][j] = 1;
+			else
+				array[i][j] = 0;
+			
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
@@ -318,8 +429,16 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 		}
 	}
 
-	drawShip(window);
-	makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, 900, (desktopsize.width / 4) - (desktopsize.width / 10));
+	window.draw(largestShip);
+	window.draw(largeShip);
+	window.draw(smallShip);
+	window.draw(smallestShip);
+
+	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, 900, (desktopsize.width / 4) - (desktopsize.width / 10));
 	window.display();
 	return true;
+}
+
+void gamePlayScreen() {
+
 }

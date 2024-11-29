@@ -5,14 +5,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{4446DD58-4074-46EE-A467-E6EC673D8B0A}|sfml.vcxproj|C:\\Users\\user\\source\\repos\\sfml\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{4446DD58-4074-46EE-A467-E6EC673D8B0A}|sfml.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\user\\source\\repos\\sfml\\whiteAlternate.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:whiteAlternate.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\user\\source\\repos\\sfml\\MainWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:MainWindow.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -32,33 +24,10 @@
               "RelativeDocumentMoniker": "main.cpp",
               "ToolTip": "C:\\Users\\user\\source\\repos\\sfml\\main.cpp",
               "RelativeToolTip": "main.cpp",
-              "ViewState": "AgIAAC0BAAAAAAAAAAAAAD8BAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACcBAAAAAAAAAAAmwD8BAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-11-16T07:17:17.21Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "whiteAlternate.cpp",
-              "DocumentMoniker": "C:\\Users\\user\\source\\repos\\sfml\\whiteAlternate.cpp",
-              "RelativeDocumentMoniker": "whiteAlternate.cpp",
-              "ToolTip": "C:\\Users\\user\\source\\repos\\sfml\\whiteAlternate.cpp",
-              "RelativeToolTip": "whiteAlternate.cpp",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-14T20:22:23.707Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "MainWindow.cpp",
-              "DocumentMoniker": "C:\\Users\\user\\source\\repos\\sfml\\MainWindow.cpp",
-              "RelativeDocumentMoniker": "MainWindow.cpp",
-              "ToolTip": "C:\\Users\\user\\source\\repos\\sfml\\MainWindow.cpp",
-              "RelativeToolTip": "MainWindow.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-14T17:35:08.208Z"
             }
           ]
         }
