@@ -414,11 +414,14 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 			else
 				rect.setFillColor(Color(50, 50, 100, 255)); //Blue Shade for when ship is placed
 
-			if (largestShip.getGlobalBounds().intersects(rect.getGlobalBounds())
-				|| largeShip.getGlobalBounds().intersects(rect.getGlobalBounds())
-				|| smallShip.getGlobalBounds().intersects(rect.getGlobalBounds())
-				|| smallestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
+			if (largestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
 				array[i][j] = 1;
+			else if(largeShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
+				array[i][j] = 2;
+			else if(smallShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
+				array[i][j] = 3;
+			else if(smallestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
+				array[i][j] = 4;
 			else
 				array[i][j] = 0;
 			
