@@ -20,7 +20,8 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager);
 bool drawBoard(RenderWindow& window, int array[10][10], int height = 10, int width = 10);
 void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height);
-void gamePlayScreen();
+void gamePlayScreen(); 
+bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight);
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
 FloatRect playGlobal;
@@ -32,9 +33,12 @@ FloatRect shipSetPlayGlobal;
 //FloatRect largeShipGlobal;
 //FloatRect smallShipGlobal;
 //FloatRect smallestShipGlobal;
-
+bool shipCollision = false;
 bool beingDragged = false;
+bool shipInGrid = false;
+bool shipInitialPos = true;
 Vector2f offset;
+Vector2f InitialPos;
 
 Texture ship4, ship3, ship2, ship1;
 Sprite largestShip, largeShip, smallShip, smallestShip;
@@ -53,6 +57,7 @@ void shipsInArray(int array[10][10], int rows = 10, int columns = 10) {
 		cout << endl;
 	}
 }
+
 
 int main() {
 
@@ -76,6 +81,7 @@ int main() {
 
 	shipsInArray(array);
 }
+
 
 int loadEverything() {
 	if (!ship4.loadFromFile("5ship.png") || !ship3.loadFromFile("4ship.png") || !ship2.loadFromFile("3ship.png") || !ship1.loadFromFile("2ship.png"))
@@ -101,12 +107,13 @@ int loadEverything() {
 	return 0;
 }
 
-//Sets the button at center of screen in accordance to width
 
+//Sets the button at center of screen in accordance to width
 int centerAlign(int screenWidth, int width) {
 	int center = (screenWidth / 2) - (width / 2);
 	return center;
 }
+
 
 void shipCreator() {
 	largestShip.setTexture(ship4);
@@ -156,7 +163,6 @@ void shipCreator() {
 }
 
 
-
 //Contains The Game Loop
 void openWindow(RenderWindow& window, Texture& mainBgTexture,  Font& mainFont, int array[10][10]) {
 	int screenManager = 0;
@@ -166,6 +172,7 @@ void openWindow(RenderWindow& window, Texture& mainBgTexture,  Font& mainFont, i
 		screenManager = handleEvents(window, array, screenManager);
 	}
 }
+
 
 void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager) {
 	switch (screenManager)
@@ -182,6 +189,7 @@ void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, 
 	}
 }
 
+
 void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height) {
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
@@ -197,9 +205,6 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 
 	int startingPointX = (screenwidth / 2);
 	int startingPointY = (screenheight / 2) - (boxsize * 5);
-
-
-	
 
 
 	if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
@@ -222,26 +227,38 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 			beingDragged = true;
 			offset = mousePos - draggedShip->getPosition();
 		}
+
 	}
 
+
+
+
+	if (shipInitialPos && draggedShip) {
+		InitialPos = draggedShip->getPosition();
+		shipInitialPos = false;
+	}
 
 
 	if (beingDragged && draggedShip && event.type == Event::MouseMoved) {
 		draggedShip->setPosition(mousePos - offset);
 	}
 
-		
 
 	if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
 		if (draggedShip) {
 				FloatRect bounds = draggedShip->getGlobalBounds();
 				Vector2f topLeft(bounds.left, bounds.top);
 
-				float snappedX = round((topLeft.x - startingPointX) / boxsize) * boxsize + startingPointX;
-				float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
+				if (shipInGrid && !shipCollision) {
+					float snappedX = round((topLeft.x - startingPointX) / boxsize) * boxsize + startingPointX;
+					float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
 
-				draggedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+					draggedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+				}
+				else
+					draggedShip->setPosition(InitialPos);
 
+				shipInitialPos = true;
 				beingDragged = false;
 				draggedShip = nullptr;
 			}
@@ -250,9 +267,11 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 
 
 	if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Right) {
-		Sprite* selectedShip = nullptr;
 
-		// Determine which ship to rotate
+		Sprite* selectedShip = nullptr;
+		int initialRotation;
+
+		//determine which ship to rotate
 		if (largestShip.getGlobalBounds().contains(mousePos)) {
 			selectedShip = &largestShip;
 		}
@@ -267,11 +286,20 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 		}
 
 		if (selectedShip) {
-			// Rotate the ship by 90 degrees
+		
+			//rotate the ship by 90 degrees
 			if (selectedShip->getRotation() == 90)
+			{
+
+				InitialPos = selectedShip->getPosition();
+				initialRotation = 90;
 				selectedShip->rotate(90);
-			else
+			}
+			else {
+				InitialPos = selectedShip->getPosition();
+				initialRotation = 180;
 				selectedShip->rotate(-90);
+			}
 
 			Vector2f shipPos = selectedShip->getPosition();
 			FloatRect bounds = selectedShip->getGlobalBounds();
@@ -282,14 +310,25 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 			float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
 
 			selectedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+
+
+			drawBoard(window, array);
+
+			if (shipCollision) {
+					
+					selectedShip->setRotation(initialRotation);
+
+					selectedShip->setPosition(InitialPos);
+
+			}
+
 		}
+
+
 	}
 
-	
-
-
-	drawBoard(window, array);
 }
+
 
 //Handles all the input Events
 int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
@@ -304,7 +343,8 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
 				Vector2i mousePos = Mouse::getPosition(window);
 				if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
-					screenManager = 2;
+					if (readyToPlay(array, 10, 10, 14))
+						screenManager = 2;
 				}
 
 			}
@@ -323,6 +363,7 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 	}
 	return screenManager;
 }
+
 
 //Displays the Main Menu
 void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFont) {
@@ -363,6 +404,7 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 
 }
 
+
 //Makes any type of Buttons(CENTER-ALIGNED)
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal) {
 	//gets screen size info to set button on centre
@@ -382,53 +424,108 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 	return button.getGlobalBounds();
 }
 
+bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight) {
+
+	int nonZero = 0;
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < columns; j++) {
+			if (array[i][j] != 0) {
+				nonZero++;
+			}
+		}
+	}
+	
+	if(nonZero == shipWeight)
+		return true;
+	return false;
+	
+}
+
+bool isShipOutOfBounds(Sprite& ship, int gridWidth, int gridHeight, float boxsize, int startingPointX, int startingPointY) {
+	FloatRect bounds = ship.getGlobalBounds();
+
+	// Calculate grid limits
+	float gridLeft = startingPointX;
+	float gridRight = startingPointX + gridWidth * boxsize;
+	float gridTop = startingPointY;
+	float gridBottom = startingPointY + gridHeight * boxsize;
+
+	// Check if the ship's bounds are outside the grid area
+	if (bounds.left < gridLeft || bounds.left + bounds.width > gridRight ||
+		bounds.top < gridTop || bounds.top + bounds.height > gridBottom) {
+		return true;
+	}
+
+	return false;
+}
 
 bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
-
 	window.clear();
+
+	shipCollision = false; 
+	shipInGrid = false;   
 
 	Sprite setShipBg;
 	setShipBg.setTexture(setShips);
-
 	window.draw(setShipBg);
 
-	// Finding out the center of the window and its size
 	VideoMode desktopsize = VideoMode::getDesktopMode();
 	int screenwidth = desktopsize.width;
 	int screenheight = desktopsize.height;
 
-	float actualboxsize = screenwidth / 30.355 ;
 	float boxsize = screenwidth / 24.836;
 	RectangleShape rect(Vector2f(boxsize, boxsize));
 
-	
-	int startingPointX = screenwidth / 2; 
+	int startingPointX = screenwidth / 2;
 	int startingPointY = (screenheight / 2) - (boxsize * 5);
 
-	// Drawing our grid
+	//lambda
+	auto processShip = [&](Sprite& ship, int shipValue) {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				rect.setPosition(Vector2f(startingPointX + (boxsize * j), startingPointY + (boxsize * i)));
+
+				//checking if current ship intersects a cell
+				if (ship.getGlobalBounds().intersects(rect.getGlobalBounds())) {
+					if (array[i][j] == 0) {
+						array[i][j] = shipValue;
+					}
+					else if (array[i][j] != shipValue) {
+						shipCollision = true; 
+					}
+					if (!rect.getGlobalBounds().intersects(ship.getGlobalBounds())) {
+						shipCollision = true;
+					}
+					if (isShipOutOfBounds(ship, width, height, boxsize, startingPointX, startingPointY)) 
+						shipCollision = true;
+					if (draggedShip == &ship) {
+						shipInGrid = true; 
+					}
+				}
+			}
+		}
+	};
+
+	//resetting the array
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			array[i][j] = 0;
+		}
+	}
+
+	processShip(largestShip, 1);
+	processShip(largeShip, 2);
+	processShip(smallShip, 3);
+	processShip(smallestShip, 4);
+
+	//drawing the grid
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX + (boxsize * j), startingPointY + (boxsize * i)));
-			if(array[i][j] == 0)
-				rect.setFillColor(Color(25, 25, 25, 255));
-			else
-				rect.setFillColor(Color(50, 50, 100, 255)); //Blue Shade for when ship is placed
-
-			if (largestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
-				array[i][j] = 1;
-			else if(largeShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
-				array[i][j] = 2;
-			else if(smallShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
-				array[i][j] = 3;
-			else if(smallestShip.getGlobalBounds().intersects(rect.getGlobalBounds()))
-				array[i][j] = 4;
-			else
-				array[i][j] = 0;
-			
+			rect.setFillColor(array[i][j] == 0 ? Color(25, 25, 25, 255) : Color(50, 50, 100, 255));
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
-
 		}
 	}
 
@@ -439,9 +536,11 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 
 	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, 900, (desktopsize.width / 4) - (desktopsize.width / 10));
 	window.display();
+
 	return true;
 }
 
-void gamePlayScreen() {
 
+void gamePlayScreen() {
+	cout << "Here I am";
 }
