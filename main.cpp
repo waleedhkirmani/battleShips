@@ -20,7 +20,7 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager);
 bool drawBoard(RenderWindow& window, int array[10][10], int height = 10, int width = 10);
 void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height);
-void gamePlayScreen(); 
+void gamePlayScreen(RenderWindow& window, int array[10][10], int width, int height);
 bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight);
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
@@ -37,6 +37,7 @@ bool shipCollision = false;
 bool beingDragged = false;
 bool shipInGrid = false;
 bool shipInitialPos = true;
+bool one = true, two = true, three = true, four = true, five = true;
 Vector2f offset;
 Vector2f InitialPos;
 
@@ -189,7 +190,7 @@ void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, 
 		drawBoard(window, array, 10, 10);
 		break;
 	case 2:
-		gamePlayScreen();
+		gamePlayScreen(window, array, 10, 10);
 		break;
 	}
 }
@@ -244,7 +245,6 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 		InitialPos = draggedShip->getPosition();
 		shipInitialPos = false;
 	}
-
 
 	if (beingDragged && draggedShip && event.type == Event::MouseMoved) {
 		draggedShip->setPosition(mousePos - offset);
@@ -353,7 +353,7 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
 				Vector2i mousePos = Mouse::getPosition(window);
 				if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
-					if (readyToPlay(array, 10, 10, 14))
+					if (readyToPlay(array, 10, 10, 17))
 						screenManager = 2;
 				}
 
@@ -436,7 +436,15 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 	return button.getGlobalBounds();
 }
 
+////////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+
 bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight) {
+
+
+
+
 
 	int nonZero = 0;
 	for (int i = 0; i < rows; i++) {
@@ -552,7 +560,78 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	return true;
 }
 
+bool transferShips(Sprite& ship, int startingPointX, int startingPointY, float boxsize, int i, int j, int width, int height, int blocks) {
+	
+	if (ship.getRotation() == 90) {
+		ship.setOrigin(0, height);
+		//ship.setScale(ship.getGlobalBounds().width / (static_cast<float>(blocks) * boxsize - 1), ship.getGlobalBounds().height / (static_cast<float>(boxsize) - 1));
+	}
+	else {
+		ship.setOrigin(width, height);
+		//ship.setScale(ship.getGlobalBounds().height / (static_cast<float>(boxsize) - 1), ship.getGlobalBounds().width / (static_cast<float>(blocks) * boxsize - 1));
 
-void gamePlayScreen() {
-	//cout << "Here I am";
+	}
+	ship.setPosition(startingPointX + (boxsize * j), startingPointY + (boxsize * i));
+
+	return false;
+}
+
+void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int height = 10) {
+	window.clear();
+
+
+	float boxsize = desktopsize.width / 24.836;
+	RectangleShape rect(Vector2f(boxsize, boxsize));
+
+	int startingPointX1 = desktopsize.width / 15;
+	int startingPointX2 = desktopsize.width / 1.8;
+	int startingPointY = (desktopsize.height / 2) - (boxsize * 5);
+
+
+
+
+	//left grid
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			rect.setPosition(Vector2f(startingPointX1 + (boxsize * j), startingPointY + (boxsize * i)));
+			rect.setFillColor(array[i][j] == 0 ? Color(25, 25, 25, 255) : Color(50, 50, 100, 255));
+			rect.setOutlineColor(Color(255, 255, 255, 255));
+			rect.setOutlineThickness(1);
+			window.draw(rect);
+			if (array[i][j] == 1 && one) {
+				one = transferShips(airCraftCarrier, startingPointX1, startingPointY, boxsize, i, j, 274, 59, 5);
+			}
+			if (array[i][j] == 2 && two) {
+				two = transferShips(battleShip, startingPointX1, startingPointY, boxsize, i, j, 219, 60, 4);
+			}
+			if (array[i][j] == 3 && three) {
+				three = transferShips(cruiser, startingPointX1, startingPointY, boxsize, i, j, 163, 59, 3);
+			}
+			if (array[i][j] == 4 && four) {
+				four = transferShips(submarine, startingPointX1, startingPointY, boxsize, i, j, 163, 59, 3);
+			}
+			if (array[i][j] == 5 && five) {
+				five = transferShips(destroyer, startingPointX1, startingPointY, boxsize, i, j, 109, 60, 2);
+			}
+		}
+	
+	}
+	window.draw(airCraftCarrier);
+	window.draw(battleShip);
+	window.draw(cruiser);
+	window.draw(submarine);
+	window.draw(destroyer);
+
+	//right grid
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			rect.setPosition(Vector2f(startingPointX2 + (boxsize * j), startingPointY + (boxsize * i)));
+			rect.setFillColor(Color(25, 25, 25, 255));
+			rect.setOutlineColor(Color(255, 255, 255, 255));
+			rect.setOutlineThickness(1);
+			window.draw(rect);
+		}
+	}
+	
+	window.display();
 }
