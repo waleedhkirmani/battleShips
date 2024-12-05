@@ -40,12 +40,16 @@ bool shipInitialPos = true;
 Vector2f offset;
 Vector2f InitialPos;
 
-Texture ship4, ship3, ship2, ship1;
-Sprite largestShip, largeShip, smallShip, smallestShip;
+Texture airCraftCarrierTexture, battleShipTexture, submarineTexture, cruiserTexture, destroyerTexture;
+Sprite airCraftCarrier, battleShip, submarine, cruiser, destroyer;
 Sprite* draggedShip;
 Font mainFont;
 Texture mainBgTexture;
 Texture setShips;
+
+VideoMode desktopsize = VideoMode::getDesktopMode();
+
+
 
 
 //JUST to show the grid in the form of array on console
@@ -84,7 +88,7 @@ int main() {
 
 
 int loadEverything() {
-	if (!ship4.loadFromFile("5ship.png") || !ship3.loadFromFile("4ship.png") || !ship2.loadFromFile("3ship.png") || !ship1.loadFromFile("2ship.png"))
+	if (!airCraftCarrierTexture.loadFromFile("airCraftCarrierTexture.png") || !battleShipTexture.loadFromFile("battleShipTexture.png") || !submarineTexture.loadFromFile("submarineTexture.png") || !cruiserTexture.loadFromFile("cruiserTexture.png") || !destroyerTexture.loadFromFile("destroyerTexture.png"))
 	{
 		cout << "Ships not Loaded";
 		return -1;
@@ -93,6 +97,7 @@ int loadEverything() {
 	{
 		return -1;
 	}
+
 
 	if (!setShips.loadFromFile("Set Ships.png"))
 	{
@@ -116,48 +121,48 @@ int centerAlign(int screenWidth, int width) {
 
 
 void shipCreator() {
-	largestShip.setTexture(ship4);
-	largeShip.setTexture(ship3);
-	smallShip.setTexture(ship2);
-	smallestShip.setTexture(ship1);
+	airCraftCarrier.setTexture(airCraftCarrierTexture);
+	battleShip.setTexture(battleShipTexture);
+	cruiser.setTexture(cruiserTexture);
+	submarine.setTexture(submarineTexture);
+	destroyer.setTexture(destroyerTexture);
 
-	FloatRect boundsLargest = largestShip.getLocalBounds();
-	FloatRect boundsLarge = largeShip.getLocalBounds();
-	FloatRect boundsSmallest = smallestShip.getLocalBounds();
-	FloatRect boundsSmall = smallShip.getLocalBounds();
 
 	//setting up the ships upon their origin
-	largestShip.setOrigin(boundsLargest.width/2, boundsLargest.height/2);
-	largeShip.setOrigin(boundsLarge.width/2, boundsLarge.height/2);
-	smallestShip.setOrigin(boundsSmallest.width/2, boundsSmallest.height/2);
-	smallShip.setOrigin(boundsSmall.width/2, boundsSmall.height/2);
+	airCraftCarrier.setOrigin(airCraftCarrier.getLocalBounds().width/2, airCraftCarrier.getLocalBounds().height/2);
+	battleShip.setOrigin(battleShip.getLocalBounds().width/2, battleShip.getLocalBounds().height/2);
+	cruiser.setOrigin(cruiser.getLocalBounds().width/2, cruiser.getLocalBounds().height/2);
+	submarine.setOrigin(submarine.getLocalBounds().width/2, submarine.getLocalBounds().height/2);
+	destroyer.setOrigin(destroyer.getLocalBounds().width/2, destroyer.getLocalBounds().height/2);
 	
 
-	VideoMode desktop = VideoMode::getDesktopMode();
-	float x = desktop.width/25.0;
+	float x = desktopsize.width/25.0;
 	
-	float currentSizeX = desktop.width / 24.836;
-	float currentSizeY = desktop.width / 30.355;
+	float currentSizeX = desktopsize.width / 24.836;
+	float currentSizeY = desktopsize.width / 30.355;
 	float difference = (currentSizeX - currentSizeY) / 2;
 
 
 	//Setting the current ship size
-	largestShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
-	largeShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
-	smallestShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
-	smallShip.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
+	airCraftCarrier.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	battleShip.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	cruiser.scale((currentSizeX - difference) / 52, currentSizeY / 52);
+	submarine.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
+	destroyer.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
 	
 	//making ships vertical for assembly
-	largestShip.setRotation(450);
-	largeShip.setRotation(450);
-	smallShip.setRotation(450);
-	smallestShip.setRotation(450);
+	airCraftCarrier.setRotation(450);
+	battleShip.setRotation(450);
+	cruiser.setRotation(450);
+	submarine.setRotation(450);
+	destroyer.setRotation(450);
 
 
-	largestShip.setPosition(Vector2f(x += 100, desktop.height / 2.0));
-	largeShip.setPosition(Vector2f(x += 200, desktop.height / 2.0));
-	smallShip.setPosition(Vector2f(x += 200, desktop.height / 2.0));
-	smallestShip.setPosition(Vector2f(x += 200, desktop.height / 2.0));
+	airCraftCarrier.setPosition(Vector2f(x += desktopsize.height / 12.0 , desktopsize.height / 2.0));
+	battleShip.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	cruiser.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	submarine.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	destroyer.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
 
 
 }
@@ -195,7 +200,6 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
 
-	VideoMode desktopsize = VideoMode::getDesktopMode();
 	int screenwidth = desktopsize.width;
 	int screenheight = desktopsize.height;
 
@@ -210,17 +214,20 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 	if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
 
 
-		if (largestShip.getGlobalBounds().contains(mousePos)) {
-			draggedShip = &largestShip;
+		if (airCraftCarrier.getGlobalBounds().contains(mousePos)) {
+			draggedShip = &airCraftCarrier;
 		}
-		else if (largeShip.getGlobalBounds().contains(mousePos)) {
-			draggedShip = &largeShip;
+		else if (battleShip.getGlobalBounds().contains(mousePos)) {
+			draggedShip = &battleShip;
 		}
-		else if (smallShip.getGlobalBounds().contains(mousePos)) {
-			draggedShip = &smallShip;
+		else if (cruiser.getGlobalBounds().contains(mousePos)) {
+			draggedShip = &cruiser;
 		}
-		else if (smallestShip.getGlobalBounds().contains(mousePos)) {
-			draggedShip = &smallestShip;
+		else if (submarine.getGlobalBounds().contains(mousePos)) {
+			draggedShip = &submarine;
+		}
+		else if (destroyer.getGlobalBounds().contains(mousePos)) {
+			draggedShip = &destroyer;
 		}
 
 		if (draggedShip) {
@@ -272,17 +279,20 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 		int initialRotation;
 
 		//determine which ship to rotate
-		if (largestShip.getGlobalBounds().contains(mousePos)) {
-			selectedShip = &largestShip;
+		if (airCraftCarrier.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &airCraftCarrier;
 		}
-		else if (largeShip.getGlobalBounds().contains(mousePos)) {
-			selectedShip = &largeShip;
+		else if (battleShip.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &battleShip;
 		}
-		else if (smallShip.getGlobalBounds().contains(mousePos)) {
-			selectedShip = &smallShip;
+		else if (cruiser.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &cruiser;
 		}
-		else if (smallestShip.getGlobalBounds().contains(mousePos)) {
-			selectedShip = &smallestShip;
+		else if (submarine.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &submarine;
+		}
+		else if (destroyer.getGlobalBounds().contains(mousePos)) {
+			selectedShip = &destroyer;
 		}
 
 		if (selectedShip) {
@@ -370,11 +380,14 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 
 	Sprite mainBg;
 	mainBg.setTexture(mainBgTexture);
+
+	//makes the background image suitable for all screens
+	mainBg.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+
 	window.clear();
 	window.draw(mainBg);
 
-	VideoMode desktop = VideoMode::getDesktopMode();
-	int buttonWidth = desktop.width / 5, buttonHeight = buttonWidth / 4, topButton = desktop.height / 2.2, buttonDistance = desktop.height / 6;
+	int buttonWidth = desktopsize.width / 5, buttonHeight = buttonWidth / 4, topButton = desktopsize.height / 2.2, buttonDistance = desktopsize.height / 6;
 	playGlobal = makeButtons(window, mainFont, "PLAY", buttonWidth, buttonHeight, topButton, 0);
 	topButton += buttonDistance;
 	leaderboardGlobal = makeButtons(window, mainFont,"LEADERBOARD", buttonWidth, buttonHeight, topButton, 0);
@@ -391,7 +404,7 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 	Text text;
 	text.setFont(mainFont);
 	text.setStyle(Text::Bold);
-	text.setCharacterSize(45);
+	text.setCharacterSize(desktopsize.height / 24);
 	text.setFillColor(Color(0, 0, 50)); //Bluish-Black
 	text.setString(name);//Button name
 
@@ -409,8 +422,7 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal) {
 	//gets screen size info to set button on centre
 	if (horizontal == 0) {
-		VideoMode desktop = VideoMode::getDesktopMode();
-		horizontal = centerAlign(desktop.width, width);
+		horizontal = centerAlign(desktopsize.width, width);
 	}
 
 	RectangleShape button(Vector2f(width, height));
@@ -462,22 +474,20 @@ bool isShipOutOfBounds(Sprite& ship, int gridWidth, int gridHeight, float boxsiz
 bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	window.clear();
 
+
 	shipCollision = false; 
 	shipInGrid = false;   
 
 	Sprite setShipBg;
 	setShipBg.setTexture(setShips);
+	setShipBg.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
 	window.draw(setShipBg);
 
-	VideoMode desktopsize = VideoMode::getDesktopMode();
-	int screenwidth = desktopsize.width;
-	int screenheight = desktopsize.height;
-
-	float boxsize = screenwidth / 24.836;
+	float boxsize = desktopsize.width / 24.836;
 	RectangleShape rect(Vector2f(boxsize, boxsize));
 
-	int startingPointX = screenwidth / 2;
-	int startingPointY = (screenheight / 2) - (boxsize * 5);
+	int startingPointX = desktopsize.width / 2;
+	int startingPointY = (desktopsize.height / 2) - (boxsize * 5);
 
 	//lambda
 	auto processShip = [&](Sprite& ship, int shipValue) {
@@ -513,10 +523,11 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 		}
 	}
 
-	processShip(largestShip, 1);
-	processShip(largeShip, 2);
-	processShip(smallShip, 3);
-	processShip(smallestShip, 4);
+	processShip(airCraftCarrier, 1);
+	processShip(battleShip, 2);
+	processShip(cruiser, 3);
+	processShip(submarine, 4);
+	processShip(destroyer, 5);
 
 	//drawing the grid
 	for (int i = 0; i < height; i++) {
@@ -529,12 +540,13 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 		}
 	}
 
-	window.draw(largestShip);
-	window.draw(largeShip);
-	window.draw(smallShip);
-	window.draw(smallestShip);
+	window.draw(airCraftCarrier);
+	window.draw(battleShip);
+	window.draw(cruiser);
+	window.draw(submarine);
+	window.draw(destroyer);
 
-	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, 900, (desktopsize.width / 4) - (desktopsize.width / 10));
+	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, desktopsize.height / 1.2 , (desktopsize.width / 4) - (desktopsize.width / 10));
 	window.display();
 
 	return true;
@@ -542,5 +554,5 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 
 
 void gamePlayScreen() {
-	cout << "Here I am";
+	//cout << "Here I am";
 }
