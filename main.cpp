@@ -50,6 +50,13 @@ Texture setShips;
 
 VideoMode desktopsize = VideoMode::getDesktopMode();
 
+Event event;
+
+SoundBuffer clickSoundBuffer;
+SoundBuffer errorSoundBuffer;
+Sound clickSound;
+Sound errorSound;
+
 
 
 
@@ -109,6 +116,17 @@ int loadEverything() {
 	{
 		return -1;
 	}
+	if (!clickSoundBuffer.loadFromFile("minecraft-click.WAV"))
+	{
+		return -1;
+	}
+	clickSound.setBuffer(clickSoundBuffer);
+
+	if (!errorSoundBuffer.loadFromFile("error-sound.WAV"))
+	{
+		return -1;
+	}
+	errorSound.setBuffer(errorSoundBuffer);
 
 	return 0;
 }
@@ -261,9 +279,14 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 					float snappedY = round((topLeft.y - startingPointY) / boxsize) * boxsize + startingPointY;
 
 					draggedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
+
+					clickSound.play();
 				}
 				else
+				{
 					draggedShip->setPosition(InitialPos);
+					errorSound.play();
+				}
 
 				shipInitialPos = true;
 				beingDragged = false;
@@ -325,15 +348,19 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 			drawBoard(window, array);
 
 			if (shipCollision) {
-					
-					selectedShip->setRotation(initialRotation);
 
-					selectedShip->setPosition(InitialPos);
+				selectedShip->setRotation(initialRotation);
+
+				selectedShip->setPosition(InitialPos);
+
+				errorSound.play();
 
 			}
+			else
+				clickSound.play();
 
 		}
-
+		
 
 	}
 
@@ -342,7 +369,6 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 
 //Handles all the input Events
 int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
-	Event event;
 	while (window.pollEvent(event)) {
 		if (event.type == Event::KeyPressed && event.key.code ==  Keyboard::Escape)
 			window.close();
@@ -354,19 +380,30 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 				Vector2i mousePos = Mouse::getPosition(window);
 				if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
 					if (readyToPlay(array, 10, 10, 17))
+					{
+						clickSound.play();
 						screenManager = 2;
+					}
+					else
+						errorSound.play();
 				}
 
 			}
 		}
 
 		if (screenManager == 0) {
-		if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
-			Vector2i mousePos = Mouse::getPosition(window);
+			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
+				Vector2i mousePos = Mouse::getPosition(window);
 				if (exitGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					clickSound.play();
 					window.close();
+				}
 				else if (playGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
 					screenManager = 1;
+					clickSound.play();
+				}
 			}
 			
 		}
@@ -390,9 +427,9 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 	int buttonWidth = desktopsize.width / 5, buttonHeight = buttonWidth / 4, topButton = desktopsize.height / 2.2, buttonDistance = desktopsize.height / 6;
 	playGlobal = makeButtons(window, mainFont, "PLAY", buttonWidth, buttonHeight, topButton, 0);
 	topButton += buttonDistance;
-	leaderboardGlobal = makeButtons(window, mainFont,"LEADERBOARD", buttonWidth, buttonHeight, topButton, 0);
+	leaderboardGlobal = makeButtons(window, mainFont, "LEADERBOARD", buttonWidth, buttonHeight, topButton, 0);
 	topButton += buttonDistance;
-	exitGlobal = makeButtons(window, mainFont, "EXIT", buttonWidth, buttonHeight, topButton, 0);
+	exitGlobal = makeButtons(window, mainFont,  "EXIT", buttonWidth, buttonHeight, topButton, 0);
 
 	window.display();
 }
@@ -403,7 +440,7 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 
 	Text text;
 	text.setFont(mainFont);
-	text.setStyle(Text::Bold);
+	//text.setStyle(Text::Bold);
 	text.setCharacterSize(desktopsize.height / 24);
 	text.setFillColor(Color(0, 0, 50)); //Bluish-Black
 	text.setString(name);//Button name
@@ -425,14 +462,32 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 		horizontal = centerAlign(desktopsize.width, width);
 	}
 
+
+	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
+
+	
+
 	RectangleShape button(Vector2f(width, height));
 	button.setPosition(Vector2f(horizontal, vertical));
 	button.setOutlineThickness(1);
 	button.setFillColor(Color(240, 235, 255));
 	button.setOutlineColor(Color::Black);
+	if (button.getGlobalBounds().contains(mousePos))
+		button.setFillColor(Color(200, 200, 240));
 	window.draw(button);
 	//writing the text
 	writeText(window, name, mainFont, horizontal, vertical, width, height);
+	
+	/*if (Mouse::isButtonPressed(Mouse::Left)) {
+		Vector2i mousePos = Mouse::getPosition(window);
+		if (button.getGlobalBounds().contains(static_cast<Vector2f>(mousePos))) {
+			std::cout << "Button clicked!" << std::endl;
+			clickSound.play();
+		}
+	}*/
+
+
+
 	return button.getGlobalBounds();
 }
 
@@ -572,6 +627,7 @@ bool transferShips(Sprite& ship, int startingPointX, int startingPointY, float b
 
 	}
 	ship.setPosition(startingPointX + (boxsize * j), startingPointY + (boxsize * i));
+	ship.setColor(Color :: Transparent);
 
 	return false;
 }

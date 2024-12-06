@@ -1,75 +1,75 @@
 ﻿  main.cpp
-C:\Users\user\source\repos\sfml\main.cpp(140,10): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(142,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(143,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(162,63): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(162,91): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(162,91): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(162,91): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(162,91): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(162,91): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(163,58): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(163,84): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(163,84): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(163,84): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(163,84): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(163,84): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(164,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(164,81): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(164,81): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(164,81): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(164,81): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(164,81): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(165,57): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(165,83): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(165,83): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(165,83): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(165,83): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(165,83): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(166,57): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(166,83): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(166,83): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(166,83): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(166,83): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(166,83): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(207,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(208,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(212,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(329,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(385,102): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(385,53): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(390,85): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(428,40): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(428,40): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(428,40): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(428,40): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(428,40): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(428,33): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(428,33): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(428,33): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(428,33): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(428,33): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(429,42): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(429,42): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(429,42): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(429,42): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(429,42): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(429,30): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(429,30): warning C4244:         with
-C:\Users\user\source\repos\sfml\main.cpp(429,30): warning C4244:         [
-C:\Users\user\source\repos\sfml\main.cpp(429,30): warning C4244:             T=float
-C:\Users\user\source\repos\sfml\main.cpp(429,30): warning C4244:         ]
-C:\Users\user\source\repos\sfml\main.cpp(468,17): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(470,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(491,105): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(491,56): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(494,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(498,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(557,126): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(566,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(570,25): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(570,18): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(583,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(587,22): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\user\source\repos\sfml\main.cpp(588,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(158,10): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(160,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(161,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(180,63): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(180,91): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(180,91): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(180,91): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(180,91): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(180,91): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(181,58): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(181,84): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(181,84): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(181,84): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(181,84): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(181,84): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(182,55): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(182,81): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(182,81): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(182,81): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(182,81): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(182,81): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(183,57): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(183,83): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(183,83): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(183,83): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(183,83): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(183,83): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(184,57): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(184,83): warning C4244: 'argument': conversion from 'double' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(184,83): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(184,83): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(184,83): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(184,83): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(225,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(226,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(230,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(352,31): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(422,102): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(422,53): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(427,85): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(470,40): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(470,40): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(470,40): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(470,40): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(470,40): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(470,33): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(470,33): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(470,33): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(470,33): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(470,33): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(471,42): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(471,42): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(471,42): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(471,42): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(471,42): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(471,30): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(471,30): warning C4244:         with
+C:\Users\user\source\repos\sfml\main.cpp(471,30): warning C4244:         [
+C:\Users\user\source\repos\sfml\main.cpp(471,30): warning C4244:             T=float
+C:\Users\user\source\repos\sfml\main.cpp(471,30): warning C4244:         ]
+C:\Users\user\source\repos\sfml\main.cpp(523,17): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(525,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(546,105): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(546,56): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(549,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(553,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(612,126): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(621,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(625,25): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(625,18): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(639,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(643,22): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\user\source\repos\sfml\main.cpp(644,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
   sfml.vcxproj -> C:\Users\user\source\repos\sfml\x64\Debug\sfml.exe
