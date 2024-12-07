@@ -22,12 +22,18 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height = 10, int wid
 void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height);
 void gamePlayScreen(RenderWindow& window, int array[10][10], int width, int height);
 bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight);
+void pauseButton(RenderWindow& window);
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
 FloatRect playGlobal;
 FloatRect leaderboardGlobal;
 FloatRect exitGlobal;
 FloatRect shipSetPlayGlobal;
+FloatRect pauseContinue;
+FloatRect pauseMenu;
+FloatRect pauseExit;
+FloatRect fireGlobal;
+
 
 //FloatRect largestShipGlobal;
 //FloatRect largeShipGlobal;
@@ -37,7 +43,10 @@ bool shipCollision = false;
 bool beingDragged = false;
 bool shipInGrid = false;
 bool shipInitialPos = true;
+bool pauseButtonPressed = false;
 bool one = true, two = true, three = true, four = true, five = true;
+int currentI = 0, currentJ = 0;
+int prevState = 0;
 Vector2f offset;
 Vector2f InitialPos;
 
@@ -47,6 +56,10 @@ Sprite* draggedShip;
 Font mainFont;
 Texture mainBgTexture;
 Texture setShips;
+Texture gameBgTexture;
+Texture crossHairTexture;
+Texture pauseButtonTexture;
+Texture dialogBoxTexture;
 
 VideoMode desktopsize = VideoMode::getDesktopMode();
 
@@ -128,6 +141,23 @@ int loadEverything() {
 	}
 	errorSound.setBuffer(errorSoundBuffer);
 
+	if (!gameBgTexture.loadFromFile("GameBg.png"))
+	{
+		return -1;
+	}
+	if (!crossHairTexture.loadFromFile("crossHair.png"))
+	{
+		return -1;
+	}
+	if (!pauseButtonTexture.loadFromFile("pauseButton.png"))
+	{
+		return -1;
+	}
+	if (!dialogBoxTexture.loadFromFile("dialogBox.png"))
+	{
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -138,6 +168,36 @@ int centerAlign(int screenWidth, int width) {
 	return center;
 }
 
+void resetShips() {
+	//making ships vertical for assembly
+	float x = desktopsize.width / 25.0;
+
+	//setting up the ships upon their origin
+	airCraftCarrier.setOrigin(airCraftCarrier.getLocalBounds().width / 2, airCraftCarrier.getLocalBounds().height / 2);
+	battleShip.setOrigin(battleShip.getLocalBounds().width / 2, battleShip.getLocalBounds().height / 2);
+	cruiser.setOrigin(cruiser.getLocalBounds().width / 2, cruiser.getLocalBounds().height / 2);
+	submarine.setOrigin(submarine.getLocalBounds().width / 2, submarine.getLocalBounds().height / 2);
+	destroyer.setOrigin(destroyer.getLocalBounds().width / 2, destroyer.getLocalBounds().height / 2);
+
+
+	airCraftCarrier.setPosition(Vector2f(x += desktopsize.height / 12.0, desktopsize.height / 2.0));
+	battleShip.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	cruiser.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	submarine.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+	destroyer.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
+
+	airCraftCarrier.setRotation(450);
+	battleShip.setRotation(450);
+	cruiser.setRotation(450);
+	submarine.setRotation(450);
+	destroyer.setRotation(450);
+
+	airCraftCarrier.setColor(Color(255, 255, 255, 255));
+	battleShip.setColor(Color(255, 255, 255, 255));
+	cruiser.setColor(Color(255, 255, 255, 255));
+	submarine.setColor(Color(255, 255, 255, 255));
+	destroyer.setColor(Color(255, 255, 255, 255));
+}
 
 void shipCreator() {
 	airCraftCarrier.setTexture(airCraftCarrierTexture);
@@ -146,16 +206,6 @@ void shipCreator() {
 	submarine.setTexture(submarineTexture);
 	destroyer.setTexture(destroyerTexture);
 
-
-	//setting up the ships upon their origin
-	airCraftCarrier.setOrigin(airCraftCarrier.getLocalBounds().width/2, airCraftCarrier.getLocalBounds().height/2);
-	battleShip.setOrigin(battleShip.getLocalBounds().width/2, battleShip.getLocalBounds().height/2);
-	cruiser.setOrigin(cruiser.getLocalBounds().width/2, cruiser.getLocalBounds().height/2);
-	submarine.setOrigin(submarine.getLocalBounds().width/2, submarine.getLocalBounds().height/2);
-	destroyer.setOrigin(destroyer.getLocalBounds().width/2, destroyer.getLocalBounds().height/2);
-	
-
-	float x = desktopsize.width/25.0;
 	
 	float currentSizeX = desktopsize.width / 24.836;
 	float currentSizeY = desktopsize.width / 30.355;
@@ -169,21 +219,7 @@ void shipCreator() {
 	submarine.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
 	destroyer.scale((currentSizeX - difference)/ 52, currentSizeY / 52);
 	
-	//making ships vertical for assembly
-	airCraftCarrier.setRotation(450);
-	battleShip.setRotation(450);
-	cruiser.setRotation(450);
-	submarine.setRotation(450);
-	destroyer.setRotation(450);
-
-
-	airCraftCarrier.setPosition(Vector2f(x += desktopsize.height / 12.0 , desktopsize.height / 2.0));
-	battleShip.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
-	cruiser.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
-	submarine.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
-	destroyer.setPosition(Vector2f(x += desktopsize.height / 7.2, desktopsize.height / 2.0));
-
-
+	resetShips();
 }
 
 
@@ -366,46 +402,100 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 
 }
 
-
 //Handles all the input Events
 int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 	while (window.pollEvent(event)) {
+
+		Vector2i mousePos = Mouse::getPosition(window);
+
 		if (event.type == Event::KeyPressed && event.key.code ==  Keyboard::Escape)
 			window.close();
 
 		if (screenManager == 1)
 		{
 			handleDrag(window, event, array, 10, 10);
-			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
-				Vector2i mousePos = Mouse::getPosition(window);
-				if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
-					if (readyToPlay(array, 10, 10, 17))
+			if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
+				if (pauseButtonPressed) {
+					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
 						clickSound.play();
-						screenManager = 2;
+						window.close();
+						
 					}
-					else
-						errorSound.play();
+					if (pauseContinue.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						FloatRect temp;
+						pauseContinue = temp;
+						pauseButtonPressed = false;
+						clickSound.play();
+					}
+					if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						FloatRect temp;
+						pauseMenu = temp;
+						screenManager = 0;
+						pauseButtonPressed = false;
+						resetShips();
+						clickSound.play();
+					}
+				}
+				else {
+					if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
+						if (readyToPlay(array, 10, 10, 17))
+						{
+							FloatRect temp;
+							shipSetPlayGlobal = temp;
+							clickSound.play();
+							screenManager = 2;
+						}
+						else
+							errorSound.play();
+					}
 				}
 
 			}
 		}
 
 		if (screenManager == 0) {
-			if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
-				Vector2i mousePos = Mouse::getPosition(window);
+			if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
 				if (exitGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
-					clickSound.play();
 					window.close();
+					clickSound.play();
 				}
 				else if (playGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
+					FloatRect temp;
+					playGlobal = temp;
 					screenManager = 1;
 					clickSound.play();
 				}
 			}
 			
+		}
+
+		if (screenManager == 2) {
+			if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
+				if (pauseButtonPressed) {
+					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						window.close();
+						clickSound.play();
+					}
+					if (pauseContinue.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						pauseButtonPressed = false;
+						clickSound.play();
+					}
+					if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						screenManager = 0;
+						pauseButtonPressed = false;
+						resetShips();
+						clickSound.play();
+					}
+				}
+			}
 		}
 	}
 	return screenManager;
@@ -434,15 +524,15 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 	window.display();
 }
 
-
 //Called in the makeButtons Function. Displays and Aligns the Text
-void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height) {
+void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool isClicked) {
 
 	Text text;
 	text.setFont(mainFont);
-	//text.setStyle(Text::Bold);
+	text.setStyle(Text::Bold);
 	text.setCharacterSize(desktopsize.height / 24);
-	text.setFillColor(Color(0, 0, 50)); //Bluish-Black
+	text.setFillColor(Color(0, 0, 50));//Bluish-Black
+
 	text.setString(name);//Button name
 
 	FloatRect textRect = text.getLocalBounds(); //gets the coordinates of Text
@@ -454,7 +544,6 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 
 }
 
-
 //Makes any type of Buttons(CENTER-ALIGNED)
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal) {
 	//gets screen size info to set button on centre
@@ -465,18 +554,23 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
-	
+	bool isClicked = false;
 
 	RectangleShape button(Vector2f(width, height));
 	button.setPosition(Vector2f(horizontal, vertical));
 	button.setOutlineThickness(1);
-	button.setFillColor(Color(240, 235, 255));
+	button.setFillColor(Color(239, 242, 255));
 	button.setOutlineColor(Color::Black);
-	if (button.getGlobalBounds().contains(mousePos))
+	if (button.getGlobalBounds().contains(mousePos)) {
 		button.setFillColor(Color(200, 200, 240));
+		if (Mouse::isButtonPressed(Mouse::Left)) {
+			button.setFillColor(Color(150, 150, 190));
+			isClicked = true;
+		}
+	}
 	window.draw(button);
 	//writing the text
-	writeText(window, name, mainFont, horizontal, vertical, width, height);
+	writeText(window, name, mainFont, horizontal, vertical, width, height, isClicked);
 	
 	/*if (Mouse::isButtonPressed(Mouse::Left)) {
 		Vector2i mousePos = Mouse::getPosition(window);
@@ -491,14 +585,14 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 	return button.getGlobalBounds();
 }
 
-////////////////////////////////////////////////
-///////////////////////////////////////////////
-///////////////////////////////////////////////
+  //////////////////////////////////////////////
+ //////////////////////////////////////////////
+//////////////////////////////////////////////
 
 bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight) {
 
 
-
+	//return true;
 
 
 	int nonZero = 0;
@@ -545,6 +639,7 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	setShipBg.setTexture(setShips);
 	setShipBg.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
 	window.draw(setShipBg);
+
 
 	float boxsize = desktopsize.width / 24.836;
 	RectangleShape rect(Vector2f(boxsize, boxsize));
@@ -610,6 +705,7 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	window.draw(destroyer);
 
 	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, desktopsize.height / 1.2 , (desktopsize.width / 4) - (desktopsize.width / 10));
+	pauseButton(window);
 	window.display();
 
 	return true;
@@ -627,7 +723,8 @@ bool transferShips(Sprite& ship, int startingPointX, int startingPointY, float b
 
 	}
 	ship.setPosition(startingPointX + (boxsize * j), startingPointY + (boxsize * i));
-	ship.setColor(Color :: Transparent);
+	ship.setColor(Color :: Black);
+
 
 	return false;
 }
@@ -635,22 +732,50 @@ bool transferShips(Sprite& ship, int startingPointX, int startingPointY, float b
 void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int height = 10) {
 	window.clear();
 
+	Sprite gameBg;
+	gameBg.setTexture(gameBgTexture);
+	gameBg.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+
+
+	Sprite crossHair;
+	crossHair.setTexture(crossHairTexture);
+	crossHair.setOrigin(Vector2f(crossHair.getGlobalBounds().width / 2, crossHair.getGlobalBounds().height / 2));
+	crossHair.setPosition(-20, -20);
+
+	
+
+	window.draw(gameBg);
 
 	float boxsize = desktopsize.width / 24.836;
+	crossHair.scale(Vector2f(boxsize / 55, boxsize / 55));
 	RectangleShape rect(Vector2f(boxsize, boxsize));
 
-	int startingPointX1 = desktopsize.width / 15;
-	int startingPointX2 = desktopsize.width / 1.8;
+	int startingPointX1 = desktopsize.width / 28;
+	int startingPointX2 = desktopsize.width / 1.777;
 	int startingPointY = (desktopsize.height / 2) - (boxsize * 5);
 
-
+	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
 
 	//left grid
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX1 + (boxsize * j), startingPointY + (boxsize * i)));
-			rect.setFillColor(array[i][j] == 0 ? Color(25, 25, 25, 255) : Color(50, 50, 100, 255));
+
+				/*if (rect.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
+					
+				}*/
+				if (array[i][j] == 0) {
+					rect.setFillColor(Color(25, 25, 25, 255));
+				}
+				else if (array[i][j] == -1) {
+					rect.setFillColor(Color(255, 0, 50));
+				}
+				else {
+					rect.setFillColor(Color(50, 50, 100, 255));
+				}
+			
+			
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
@@ -669,6 +794,9 @@ void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int
 			if (array[i][j] == 5 && five) {
 				five = transferShips(destroyer, startingPointX1, startingPointY, boxsize, i, j, 109, 60, 2);
 			}
+
+
+			
 		}
 	
 	}
@@ -686,8 +814,59 @@ void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
+
+			if (rect.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
+
+				if (currentI >= 0) {
+					array[currentI][currentJ] = prevState;/////////////////////////////////////
+				}
+				currentI = i; currentJ = j;
+				prevState = array[i][j];///////////////////
+				array[i][j] = 10;////////////////////
+
+			}
+
+			if (array[i][j] == 10) {
+				crossHair.setPosition(mousePos);
+
+				crossHair.setPosition(Vector2f(rect.getGlobalBounds().left + rect.getGlobalBounds().width / 2, rect.getGlobalBounds().top + rect.getGlobalBounds().height / 2));
+			}
+
 		}
 	}
+	window.draw(crossHair);
+	pauseButton(window);
 	
+	fireGlobal = makeButtons(window, mainFont, "FIRE", desktopsize.width / 8.6, desktopsize.width / 23, desktopsize.height / 1.148, 0);
+
 	window.display();
+}
+
+void pauseButton(RenderWindow& window) {
+	Sprite pause;
+	pause.setTexture(pauseButtonTexture);
+	pause.scale(1.3, 1.3);
+	pause.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+	pause.setPosition(static_cast<float>(desktopsize.width) / 96.0, static_cast<float>(desktopsize.height) / 54.0);
+	window.draw(pause);
+
+	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
+
+	Sprite dialogBox;
+	dialogBox.setTexture(dialogBoxTexture);
+	dialogBox.setOrigin(Vector2f(dialogBox.getGlobalBounds().width / 2, dialogBox.getGlobalBounds().height / 2));
+	dialogBox.setPosition(Vector2f(desktopsize.width / 2, desktopsize.height / 2));
+
+	if (pause.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
+		
+		clickSound.play();
+		pauseButtonPressed = true;
+	}
+
+	if (pauseButtonPressed) {
+		window.draw(dialogBox);
+		pauseContinue = makeButtons(window, mainFont, "Continue", desktopsize.height / 2.7, desktopsize.height / 13.5, desktopsize.height / 2.4, 0);
+		pauseMenu = makeButtons(window, mainFont, "Back to Menu", desktopsize.height / 2.7, desktopsize.height / 13.5, desktopsize.height / 1.9636, 0);
+		pauseExit = makeButtons(window, mainFont, "Exit", desktopsize.height / 2.7, desktopsize.height / 13.5, desktopsize.height / 1.6615, 0);
+	}
 }
