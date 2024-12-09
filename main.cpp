@@ -1,5 +1,10 @@
 #include <iostream>
+#include <cstdlib> // For rand() and srand()
+#include <ctime>   // For time()
 #include<cmath>
+#include <sstream>
+#include <thread> // For simulating resource loading
+#include <chrono>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
@@ -12,17 +17,19 @@ using namespace sf;
 
 //function definitions:
 
-void openWindow(RenderWindow& window, Texture& mainBgTexture, Font& mainFont,int array[10][10]);
+void openWindow(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int aiGrid[10][10], bool aimed[10][10]);
 int loadEverything();
-int handleEvents(RenderWindow& window, int array[10][10], int screenManager);
+int handleEvents(RenderWindow& window, int screenManager);
 void drawMainScreen(RenderWindow& window, Texture& mainBgTexture, Font& mainFont);
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal);
-void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager);
-bool drawBoard(RenderWindow& window, int array[10][10], int height = 10, int width = 10);
-void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height);
-void gamePlayScreen(RenderWindow& window, int array[10][10], int width, int height);
-bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight);
+void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int aiGrid[10][10], bool aimed[10][10], int screenManager);
+bool drawBoard(RenderWindow& window, int height = 10, int width = 10);
+void handleDrag(RenderWindow& window, Event& event, int width, int height);
+void gamePlayScreen(RenderWindow& window, int aiGrid[10][10], bool aimed[10][10], int width, int height);
+bool readyToPlay(int rows, int columns, int shipWeight);
 void pauseButton(RenderWindow& window);
+void leaderBoardScreen(RenderWindow& window);
+void mainLoadingScreen(RenderWindow& window);
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
 FloatRect playGlobal;
@@ -44,11 +51,22 @@ bool beingDragged = false;
 bool shipInGrid = false;
 bool shipInitialPos = true;
 bool pauseButtonPressed = false;
-bool one = true, two = true, three = true, four = true, five = true;
+bool oneTime = true;
 int currentI = 0, currentJ = 0;
-int prevState = 0;
+int prevState = 0, newState = 0;
+bool playerTurn = true;
+
+int playerScore = 100, aiScore = 100;
 Vector2f offset;
 Vector2f InitialPos;
+
+//some global variables that are to be used
+int attackCoordX, attackCoordY, sizeAttack; // global variables that store the ai attack coordinates and the "size" of the ship being attacked
+bool directionConfirmation; //  specifies whether or not the direction is confirmed
+int currentCount = 0; // specifies what the count of loop is being run on the ai mode
+int shipValueTargetted; // classifies the type of ship being targetted
+int directionToTarget = 0; // 1 for north, 2 for east, 3 for south, 4 for west
+bool targetMode = false;
 
 Texture airCraftCarrierTexture, battleShipTexture, submarineTexture, cruiserTexture, destroyerTexture;
 Sprite airCraftCarrier, battleShip, submarine, cruiser, destroyer;
@@ -60,6 +78,8 @@ Texture gameBgTexture;
 Texture crossHairTexture;
 Texture pauseButtonTexture;
 Texture dialogBoxTexture;
+Texture LeaderBoardTexture;
+Texture mainLoading;
 
 VideoMode desktopsize = VideoMode::getDesktopMode();
 
@@ -70,14 +90,35 @@ SoundBuffer errorSoundBuffer;
 Sound clickSound;
 Sound errorSound;
 
+int userArray[10][10] = { 0 };
+
 
 
 
 //JUST to show the grid in the form of array on console
-void shipsInArray(int array[10][10], int rows = 10, int columns = 10) {
+void shipsInArray(int aiGrid[10][10], bool aimed[10][10], int rows = 10, int columns = 10) {
+	cout << "Array\n";
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++) {
-			cout << array[i][j] << " ";
+			cout << userArray[i][j] << " ";
+		}
+		cout << endl;
+	}
+
+	cout << "Ai grid\n";
+
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < columns; j++) {
+			cout << aiGrid[i][j] << " ";
+		}
+		cout << endl;
+	}
+
+	cout << "aimed\n";
+
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < columns; j++) {
+			cout << aimed[i][j] << " ";
 		}
 		cout << endl;
 	}
@@ -93,18 +134,30 @@ int main() {
 	RenderWindow window(desktop, "BATTLESHIPS", Style::Fullscreen);
 
 	//Loading Textures & Fonts
+
+	if (!mainLoading.loadFromFile("Made Without Unity.png"))
+	{
+		return -1;
+	}
+
+	mainLoadingScreen(window);
 	
 	if (loadEverything() == -1)
 		return 0;
 	
-	
-	int array[10][10] = {0};
+
+	int aiGrid[10][10] = { 0 };
+
+	bool aimed[10][10] = { false };
+
 
 	//opens the main menu
-	openWindow(window, mainBgTexture, mainFont, array);
+	openWindow(window, mainBgTexture, mainFont, aiGrid, aimed);
 
 
-	shipsInArray(array);
+	shipsInArray(aiGrid, aimed);
+
+	cout << "Player Score = " << playerScore << "AI Score : " << aiScore << endl;
 }
 
 
@@ -157,10 +210,23 @@ int loadEverything() {
 	{
 		return -1;
 	}
+	if (!LeaderBoardTexture.loadFromFile("LEADERBOARD.png"))
+	{
+		return -1;
+	}
 
 	return 0;
 }
 
+void mainLoadingScreen(RenderWindow& window) {
+	Sprite mainLoader;
+	mainLoader.setTexture(mainLoading);
+	mainLoader.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+	window.clear();
+	window.draw(mainLoader);
+	window.display();
+	this_thread::sleep_for(std::chrono::seconds(3));
+}
 
 //Sets the button at center of screen in accordance to width
 int centerAlign(int screenWidth, int width) {
@@ -222,35 +288,37 @@ void shipCreator() {
 	resetShips();
 }
 
-
 //Contains The Game Loop
-void openWindow(RenderWindow& window, Texture& mainBgTexture,  Font& mainFont, int array[10][10]) {
+void openWindow(RenderWindow& window, Texture& mainBgTexture,  Font& mainFont, int aiGrid[10][10], bool aimed[10][10]) {
 	int screenManager = 0;
 	shipCreator();
 	while (window.isOpen()) {
-		screenDecide(window, mainBgTexture, mainFont, array, screenManager);
-		screenManager = handleEvents(window, array, screenManager);
+		screenDecide(window, mainBgTexture, mainFont, aiGrid, aimed, screenManager);
+		screenManager = handleEvents(window, screenManager);
 	}
 }
 
 
-void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int array[10][10], int screenManager) {
+void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int aiGrid[10][10], bool aimed[10][10], int screenManager) {
 	switch (screenManager)
 	{
 	case 0:
 		drawMainScreen(window, mainBgTexture, mainFont);
 		break;
 	case 1:
-		drawBoard(window, array, 10, 10);
+		drawBoard(window, 10, 10);
 		break;
 	case 2:
-		gamePlayScreen(window, array, 10, 10);
+		gamePlayScreen(window, aiGrid, aimed, 10, 10);
+		break;
+	case 3:
+		leaderBoardScreen(window);
 		break;
 	}
 }
 
 
-void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width, int height) {
+void handleDrag(RenderWindow& window, Event& event, int width, int height) {
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
@@ -381,7 +449,7 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 			selectedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
 
 
-			drawBoard(window, array);
+			drawBoard(window);
 
 			if (shipCollision) {
 
@@ -403,7 +471,7 @@ void handleDrag(RenderWindow& window, Event& event, int array[10][10], int width
 }
 
 //Handles all the input Events
-int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
+int handleEvents(RenderWindow& window, int screenManager) {
 	while (window.pollEvent(event)) {
 
 		Vector2i mousePos = Mouse::getPosition(window);
@@ -413,7 +481,9 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 
 		if (screenManager == 1)
 		{
-			handleDrag(window, event, array, 10, 10);
+			if (!pauseButtonPressed) {
+				handleDrag(window, event, 10, 10);
+			}
 			if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
 				if (pauseButtonPressed) {
 					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
@@ -436,12 +506,13 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 						screenManager = 0;
 						pauseButtonPressed = false;
 						resetShips();
+						//generate new grid here
 						clickSound.play();
 					}
 				}
 				else {
 					if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
-						if (readyToPlay(array, 10, 10, 17))
+						if (readyToPlay(10, 10, 17))
 						{
 							FloatRect temp;
 							shipSetPlayGlobal = temp;
@@ -470,6 +541,13 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 					screenManager = 1;
 					clickSound.play();
 				}
+				else if (leaderboardGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					FloatRect temp;
+					playGlobal = temp;
+					screenManager = 3;
+					clickSound.play();
+				}
 			}
 			
 		}
@@ -494,6 +572,35 @@ int handleEvents(RenderWindow& window, int array[10][10], int screenManager){
 						resetShips();
 						clickSound.play();
 					}
+				}
+			}
+		}
+
+		if (screenManager == 3)
+		{
+			}
+		if (event.type == Event::MouseButtonReleased && event.mouseButton.button == Mouse::Left) {
+			if (pauseButtonPressed) {
+				if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					clickSound.play();
+					window.close();
+
+				}
+				if (pauseContinue.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					FloatRect temp;
+					pauseContinue = temp;
+					pauseButtonPressed = false;
+					clickSound.play();
+				}
+				if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					FloatRect temp;
+					pauseMenu = temp;
+					screenManager = 0;
+					pauseButtonPressed = false;
+					clickSound.play();
 				}
 			}
 		}
@@ -525,13 +632,22 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 }
 
 //Called in the makeButtons Function. Displays and Aligns the Text
-void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool isClicked) {
+void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool leaderBoard) {
 
 	Text text;
 	text.setFont(mainFont);
-	text.setStyle(Text::Bold);
+	if(leaderBoard)
+		text.setStyle(Text::Bold);
 	text.setCharacterSize(desktopsize.height / 24);
-	text.setFillColor(Color(0, 0, 50));//Bluish-Black
+	if (!leaderBoard) {
+		text.setCharacterSize(desktopsize.height / 24);
+		text.setFillColor(Color(0, 0, 50));//Bluish-Black
+	}
+	else {
+		text.setCharacterSize(desktopsize.height / 15);
+		text.setFillColor(Color(239, 242, 255));//Button-white
+	}
+
 
 	text.setString(name);//Button name
 
@@ -565,12 +681,11 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 		button.setFillColor(Color(200, 200, 240));
 		if (Mouse::isButtonPressed(Mouse::Left)) {
 			button.setFillColor(Color(150, 150, 190));
-			isClicked = true;
 		}
 	}
 	window.draw(button);
 	//writing the text
-	writeText(window, name, mainFont, horizontal, vertical, width, height, isClicked);
+	writeText(window, name, mainFont, horizontal, vertical, width, height, false);
 	
 	/*if (Mouse::isButtonPressed(Mouse::Left)) {
 		Vector2i mousePos = Mouse::getPosition(window);
@@ -589,16 +704,16 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
  //////////////////////////////////////////////
 //////////////////////////////////////////////
 
-bool readyToPlay(int array[10][10], int rows, int columns, int shipWeight) {
+bool readyToPlay(int rows, int columns, int shipWeight) {
 
 
-	//return true;
+	return true;
 
 
 	int nonZero = 0;
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++) {
-			if (array[i][j] != 0) {
+			if (userArray[i][j] != 0) {
 				nonZero++;
 			}
 		}
@@ -628,7 +743,7 @@ bool isShipOutOfBounds(Sprite& ship, int gridWidth, int gridHeight, float boxsiz
 	return false;
 }
 
-bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
+bool drawBoard(RenderWindow& window, int height, int width) {
 	window.clear();
 
 
@@ -655,10 +770,10 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 
 				//checking if current ship intersects a cell
 				if (ship.getGlobalBounds().intersects(rect.getGlobalBounds())) {
-					if (array[i][j] == 0) {
-						array[i][j] = shipValue;
+					if (userArray[i][j] == 0) {
+						userArray[i][j] = shipValue;
 					}
-					else if (array[i][j] != shipValue) {
+					else if (userArray[i][j] != shipValue) {
 						shipCollision = true; 
 					}
 					if (!rect.getGlobalBounds().intersects(ship.getGlobalBounds())) {
@@ -674,10 +789,10 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 		}
 	};
 
-	//resetting the array
+	//resetting the userArray
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			array[i][j] = 0;
+			userArray[i][j] = 0;
 		}
 	}
 
@@ -691,7 +806,7 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX + (boxsize * j), startingPointY + (boxsize * i)));
-			rect.setFillColor(array[i][j] == 0 ? Color(25, 25, 25, 255) : Color(50, 50, 100, 255));
+			rect.setFillColor(userArray[i][j] == 0 ? Color(25, 25, 25, 255) : Color(50, 50, 100, 255));
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
@@ -704,8 +819,11 @@ bool drawBoard(RenderWindow& window, int array[10][10], int height, int width) {
 	window.draw(submarine);
 	window.draw(destroyer);
 
-	shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, desktopsize.height / 1.2 , (desktopsize.width / 4) - (desktopsize.width / 10));
+	if (!pauseButtonPressed) {
+		shipSetPlayGlobal = makeButtons(window, mainFont, "PLAY", desktopsize.width / 5, desktopsize.width / 20, desktopsize.height / 1.2, (desktopsize.width / 4) - (desktopsize.width / 10));
+	}
 	pauseButton(window);
+
 	window.display();
 
 	return true;
@@ -729,7 +847,315 @@ bool transferShips(Sprite& ship, int startingPointX, int startingPointY, float b
 	return false;
 }
 
-void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int height = 10) {
+void playerFire(int x, int y, int aiGridValue, int aiGrid[10][10]) {
+	cout << "here i am";
+	if (aiGridValue < 0) {
+		cout << "Try again"; // invalid input handle
+	}
+	if (aiGridValue == 0) {
+		aiGrid[x][y] = -1;
+		cout << "Missed!";// replace box with red coloration
+		playerScore--;
+	}
+	else if (aiGridValue == 1) {
+		cout << "-10!";
+		aiGrid[x][y] = -10; // destroyer value replacement
+	}
+	else if (aiGridValue == 2) {
+		aiGrid[x][y] = -9; // warship
+	}
+	else if (aiGridValue == 3) {
+		aiGrid[x][y] = -8; // sub
+	}
+	else if (aiGridValue == 4) {
+		aiGrid[x][y] = -7; // battleship
+	}
+	else if (aiGridValue == 5) {
+		aiGrid[x][y] = -6; // carrier idk
+	}
+}
+
+
+void aiFire(int playerGrid[10][10]) {
+
+		srand(static_cast<unsigned>(time(0)));
+		int x = rand() % 10;
+		int y = rand() % 10;
+		while (playerGrid[y][x] < 0) { // invalid input handle
+			x = rand() % 10;
+			y = rand() % 10;
+		}
+		if (targetMode == false) {
+			if (playerGrid[y][x] == 0) {
+				playerGrid[y][x] = -1;
+				aiScore--;
+				// replace box with red coloration
+			}
+			if (playerGrid[y][x] == 1) {
+				playerGrid[y][x] = -10; // airCraftCarrier value replacement
+				attackCoordX = x;
+				attackCoordY = y;
+				targetMode = true;
+				sizeAttack = 5 - 1;
+				shipValueTargetted = 1;
+			}
+			if (playerGrid[y][x] == 2) {
+				playerGrid[y][x] = -9; // warship
+				attackCoordX = x;
+				attackCoordY = y;
+				targetMode = true;
+				sizeAttack = 4 - 1;
+				shipValueTargetted = 2;
+			}
+			if (playerGrid[y][x] == 3) {
+				playerGrid[y][x] = -8; // battleship
+				attackCoordX = x;
+				attackCoordY = y;
+				targetMode = true;
+				sizeAttack = 3 - 1;
+				shipValueTargetted = 3;
+			}
+			if (playerGrid[y][x] == 4) {
+				playerGrid[y][x] = -7; // submarine
+				attackCoordX = x;
+				attackCoordY = y;
+				targetMode = true;
+				sizeAttack = 3 - 1;
+				shipValueTargetted = 4;
+			}
+			if (playerGrid[y][x] == 5) {
+				playerGrid[y][x] = -6; // destroyer
+				attackCoordX = x;
+				attackCoordY = y;
+				targetMode = true;
+				sizeAttack = 2 - 1;
+				shipValueTargetted = 5;
+			}
+		}
+		if (targetMode == true) {
+			if (directionConfirmation == false) {
+
+				if (currentCount == 0) {
+					attackCoordY--;
+					if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
+						directionConfirmation = true;
+						directionToTarget = 1; // sets the direction to be north.
+						currentCount = 0; // resetting the targetting process
+						playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
+						sizeAttack--; //decrements the size of ships being attacked for this specific one.
+						cout << "Hit.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
+						directionConfirmation = false;
+						playerGrid[attackCoordY][attackCoordX] = -1;
+						attackCoordY++;
+						cout << "Miss.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
+						currentCount++;
+						aiFire(userArray);
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
+						int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
+						playerGrid[attackCoordY][attackCoordX] = -11 + temp;
+						currentCount++;
+					}
+					else if (attackCoordY < 0) { // handles if the coordinate is out of bounds.
+						currentCount++;
+						aiFire(userArray);
+					}
+				}
+
+				if (currentCount == 1) {
+					attackCoordX++; // to check the right side
+					attackCoordY++; // to undo the decrement in previous block
+
+					if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
+						directionConfirmation = true;
+						directionToTarget = 2; // sets the direction to be east.
+						currentCount = 0; // resetting the targetting process
+						playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
+						sizeAttack--; //decrements the size of ships being attacked for this specific one.
+						cout << "Hit.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
+						directionConfirmation = false;
+						playerGrid[attackCoordY][attackCoordX] = -1;
+						attackCoordX--;
+						cout << "Miss.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
+						currentCount++;
+						aiFire(userArray);
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
+						int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
+						playerGrid[attackCoordY][attackCoordX] = -11 + temp;
+						currentCount++;
+					}
+					else if (attackCoordX > 9) { // handles if the coordinate is out of bounds.
+						currentCount++;
+						aiFire(userArray);
+					}
+				}
+
+				if (currentCount == 2) {
+					attackCoordX--; //undoes the previous increment in the currentcount==1 block
+					attackCoordY++; // now checks if the direction is in the south.
+					if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
+						directionConfirmation = true;
+						directionToTarget = 3; // sets the direction to be south.
+						currentCount = 0; // resetting the targetting process
+						playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
+						sizeAttack--; //decrements the size of ships being attacked for this specific one.
+						cout << "Hit.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
+						directionConfirmation = false;
+						playerGrid[attackCoordY][attackCoordX] = -1;
+						attackCoordY--;
+						cout << "Miss.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
+						currentCount++;
+						aiFire(userArray);
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
+						int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
+						playerGrid[attackCoordY][attackCoordX] = -11 + temp;
+						currentCount++;
+					}
+					else if (attackCoordY > 9) { // handles if the coordinate is out of bounds.
+						currentCount++;
+						aiFire(userArray);
+					}
+				}
+
+				if (currentCount == 3) {
+					attackCoordY--; //undoes the previous increment in the currentcount==2 block
+					attackCoordX--; // now checks if the direction is in the west
+					if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
+						directionConfirmation = true;
+						directionToTarget = 4; // sets the direction to be south.
+						currentCount = 0; // resetting the targetting process
+						playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
+						sizeAttack--; //decrements the size of ships being attacked for this specific one.
+						cout << "Hit.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
+						directionConfirmation = false;
+						playerGrid[attackCoordY][attackCoordX] = -1;
+						attackCoordX++;
+						cout << "Miss.";
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
+						currentCount++;
+						aiFire(userArray);
+					}
+					else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
+						int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
+						playerGrid[attackCoordY][attackCoordX] = -11 + temp;
+						currentCount++;
+					}
+					else if (attackCoordX < 0) { // handles if the coordinate is out of bounds.
+						currentCount++;
+						aiFire(userArray);
+					}
+				}
+			}
+			if (sizeAttack == 0) {
+				directionConfirmation = false;
+				targetMode = false;
+				cout << shipValueTargetted << " has been completely destroyed.\n";
+			}
+			if (directionConfirmation == true) {
+				if (directionToTarget == 1) {
+					attackCoordY--;
+					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
+					sizeAttack--;
+				}
+				if (directionToTarget == 2) {
+					attackCoordX++;
+					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
+					sizeAttack--;
+				}
+				if (directionToTarget == 3) {
+					attackCoordY++;
+					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
+					sizeAttack--;
+				}
+				if (directionToTarget == 4) {
+					attackCoordX--;
+					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
+					sizeAttack--;
+				}
+				if (sizeAttack == 0) {
+					targetMode = false;
+					directionConfirmation = false;
+				}
+			}
+		}
+}
+
+void colorGrid(RenderWindow& window, RectangleShape& rect, int currentValue, bool user) {
+	if (currentValue < -1) {
+		rect.setFillColor(Color(110, 0, 0));
+	}
+	else if (currentValue == -1) {
+		rect.setFillColor(Color(70, 120, 160));
+	}
+	else {
+		rect.setFillColor(Color(25, 25, 25, 255));
+	}
+
+	if (user) {
+		if (currentValue > 0) {
+			rect.setFillColor(Color(50, 50, 100, 255));
+		}
+	}
+	window.draw(rect);
+}
+
+bool oneAtATime(bool aimed[10][10]) {
+	int count = 0;
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			if (aimed[i][j]) count++;
+			if (count > 1) aimed[i][j] = false; // Reset excess
+		}
+	}
+	return count <= 1;
+}
+
+bool gameEnder(int aiGrid[10][10]) {
+	int userCount = 0, aiCount = 0;
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			if (userArray[i][j] < -1)
+				userCount++;
+			if (aiGrid[i][j] < -1)
+				aiCount++;
+		}
+	}
+	if (userCount == 17 || aiCount == 17)
+		return true;
+	return false;
+}
+
+bool destroyedShips(RenderWindow& window, int aiGrid[10][10], Sprite& ship, int shipNo) {
+	int count = 0;
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			if (aiGrid[i][j] == shipNo)
+				count++;
+		}
+	}
+	if (count == 0) 
+		return true;
+	return false;
+}
+
+void gamePlayScreen(RenderWindow& window, int aiGrid[10][10], bool aimed[10][10], int width = 10, int height = 10) {
 	window.clear();
 
 	Sprite gameBg;
@@ -741,8 +1167,6 @@ void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int
 	crossHair.setTexture(crossHairTexture);
 	crossHair.setOrigin(Vector2f(crossHair.getGlobalBounds().width / 2, crossHair.getGlobalBounds().height / 2));
 	crossHair.setPosition(-20, -20);
-
-	
 
 	window.draw(gameBg);
 
@@ -756,42 +1180,49 @@ void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
+	if (oneTime) {
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				aiGrid[i][j] = userArray[i][j];
+			}
+		}
 
+		oneTime = false;
+	}
+
+	if (!playerTurn) {
+		aiFire(userArray);
+
+		playerTurn = true;
+		sf::Clock clock;
+		while (clock.getElapsedTime().asSeconds() < 1.0f) {
+		}
+	}
+
+	bool one = true, two = true, three = true, four = true, five = true;
 	//left grid
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX1 + (boxsize * j), startingPointY + (boxsize * i)));
 
-				/*if (rect.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
-					
-				}*/
-				if (array[i][j] == 0) {
-					rect.setFillColor(Color(25, 25, 25, 255));
-				}
-				else if (array[i][j] == -1) {
-					rect.setFillColor(Color(255, 0, 50));
-				}
-				else {
-					rect.setFillColor(Color(50, 50, 100, 255));
-				}
-			
-			
+			colorGrid(window, rect, userArray[i][j], true);
+
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
-			if (array[i][j] == 1 && one) {
+			if ((userArray[i][j] == 1 || userArray[i][j] == -10) && one) {
 				one = transferShips(airCraftCarrier, startingPointX1, startingPointY, boxsize, i, j, 274, 59, 5);
 			}
-			if (array[i][j] == 2 && two) {
+			if ((userArray[i][j] == 2 || userArray[i][j] == -9) && two) {
 				two = transferShips(battleShip, startingPointX1, startingPointY, boxsize, i, j, 219, 60, 4);
 			}
-			if (array[i][j] == 3 && three) {
+			if ((userArray[i][j] == 3 || userArray[i][j] == -8) && three) {
 				three = transferShips(cruiser, startingPointX1, startingPointY, boxsize, i, j, 163, 59, 3);
 			}
-			if (array[i][j] == 4 && four) {
+			if ((userArray[i][j] == 4 || userArray[i][j] == -7) && four) {
 				four = transferShips(submarine, startingPointX1, startingPointY, boxsize, i, j, 163, 59, 3);
 			}
-			if (array[i][j] == 5 && five) {
+			if ((userArray[i][j] == 5 || userArray[i][j] == -6) && five) {
 				five = transferShips(destroyer, startingPointX1, startingPointY, boxsize, i, j, 109, 60, 2);
 			}
 
@@ -800,46 +1231,100 @@ void gamePlayScreen(RenderWindow& window, int array[10][10], int width = 10, int
 		}
 	
 	}
+
 	window.draw(airCraftCarrier);
 	window.draw(battleShip);
 	window.draw(cruiser);
 	window.draw(submarine);
 	window.draw(destroyer);
 
+
+	bool one1 = true, two1 = true, three1 = true, four1 = true, five1 = true;
+
 	//right grid
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			rect.setPosition(Vector2f(startingPointX2 + (boxsize * j), startingPointY + (boxsize * i)));
-			rect.setFillColor(Color(25, 25, 25, 255));
+			colorGrid(window, rect, aiGrid[i][j], false);
 			rect.setOutlineColor(Color(255, 255, 255, 255));
 			rect.setOutlineThickness(1);
 			window.draw(rect);
 
-			if (rect.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
-
-				if (currentI >= 0) {
-					array[currentI][currentJ] = prevState;/////////////////////////////////////
-				}
-				currentI = i; currentJ = j;
-				prevState = array[i][j];///////////////////
-				array[i][j] = 10;////////////////////
-
+			if (destroyedShips(window, aiGrid, airCraftCarrier, 1) && one1 && aiGrid[i][j] == -10) {
+				one1 = transferShips(airCraftCarrier, startingPointX2, startingPointY, boxsize, i, j, 274, 59, 5);
+			}
+			if (destroyedShips(window, aiGrid, battleShip, 2) && two1 && aiGrid[i][j] == -9) {
+				two1 = transferShips(battleShip, startingPointX2, startingPointY, boxsize, i, j, 274, 59, 5);
+			}
+			if (destroyedShips(window, aiGrid, cruiser, 3) && three1 && aiGrid[i][j] == -8) {
+				three1 = transferShips(cruiser, startingPointX2, startingPointY, boxsize, i, j, 274, 59, 5);
+			}
+			if (destroyedShips(window, aiGrid, submarine, 4) && four1 && aiGrid[i][j] == -7) {
+				four1 = transferShips(submarine, startingPointX2, startingPointY, boxsize, i, j, 274, 59, 5);
+			}
+			if (destroyedShips(window, aiGrid, destroyer, 5) && five1 && aiGrid[i][j] == -6) {
+				five1 = transferShips(destroyer, startingPointX2, startingPointY, boxsize, i, j, 274, 59, 5);
 			}
 
-			if (array[i][j] == 10) {
+			if (playerTurn && rect.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left) && aiGrid[i][j] >= 0 && !pauseButtonPressed) {
+				aimed[i][j] = true;
+			}
+
+			oneAtATime(aimed);
+
+			if (aimed[i][j] && oneAtATime(aimed)) {
+
 				crossHair.setPosition(mousePos);
 
 				crossHair.setPosition(Vector2f(rect.getGlobalBounds().left + rect.getGlobalBounds().width / 2, rect.getGlobalBounds().top + rect.getGlobalBounds().height / 2));
-			}
 
+				if (fireGlobal.contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
+					cout << "inside it";
+					playerFire(i, j, aiGrid[i][j], aiGrid);
+
+					aimed[i][j] = false;
+					playerTurn = false;
+				}
+			}
 		}
 	}
-	window.draw(crossHair);
-	pauseButton(window);
+
+	window.draw(airCraftCarrier);
+	window.draw(battleShip);
+	window.draw(cruiser);
+	window.draw(submarine);
+	window.draw(destroyer);
+
 	
-	fireGlobal = makeButtons(window, mainFont, "FIRE", desktopsize.width / 8.6, desktopsize.width / 23, desktopsize.height / 1.148, 0);
+	
+	
+	if (!pauseButtonPressed && playerTurn) {
+		window.draw(crossHair);
+		fireGlobal = makeButtons(window, mainFont, "FIRE", desktopsize.width / 8.6, desktopsize.width / 23, desktopsize.height / 1.148, 0);
+	}
+
+	stringstream userKaScore;
+	userKaScore << playerScore;
+	writeText(window, userKaScore.str(), mainFont, desktopsize.width / 5.3, desktopsize.height / 1.08, 20, 0, true);
+	
+	stringstream aiKaScore;
+	aiKaScore << aiScore;
+	writeText(window, aiKaScore.str(), mainFont, desktopsize.width / 1.23, desktopsize.height / 1.08, 20, 0, true);
+
+	if (playerTurn) {
+		writeText(window, "YOUR TURN", mainFont, centerAlign(desktopsize.width, 40) + 5, desktopsize.height / 14, 20, 0, true);
+	}
+	else {
+		writeText(window, "CPU's TURN", mainFont, centerAlign(desktopsize.width, 40) + 5, desktopsize.height / 14, 20, 0, true);
+
+	}
+	pauseButton(window);
 
 	window.display();
+
+	if (gameEnder(aiGrid))
+		window.close();
+
 }
 
 void pauseButton(RenderWindow& window) {
@@ -869,4 +1354,19 @@ void pauseButton(RenderWindow& window) {
 		pauseMenu = makeButtons(window, mainFont, "Back to Menu", desktopsize.height / 2.7, desktopsize.height / 13.5, desktopsize.height / 1.9636, 0);
 		pauseExit = makeButtons(window, mainFont, "Exit", desktopsize.height / 2.7, desktopsize.height / 13.5, desktopsize.height / 1.6615, 0);
 	}
+}
+
+void leaderBoardScreen(RenderWindow& window) {
+
+	Sprite leaderboard;
+	string first = "Placeholder1", second = "Placeholder2", third = "Placeholder3";
+	leaderboard.setTexture(LeaderBoardTexture);
+	leaderboard.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+	window.clear();
+	window.draw(leaderboard);
+	writeText(window, first, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 2.48, 20, 0, true);
+	writeText(window, second, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 1.7, 20, 0, true);
+	writeText(window, third, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 1.29, 20, 0, true);
+	pauseButton(window);
+	window.display();
 }
