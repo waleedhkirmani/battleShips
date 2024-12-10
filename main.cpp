@@ -5,6 +5,7 @@
 #include <sstream>
 #include <thread> // For simulating resource loading
 #include <chrono>
+#include<fstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
@@ -35,6 +36,32 @@ void settings(RenderWindow& window);
 void settingsMenu(RenderWindow& window);
 
 //GlobalVariables for button coordinates, updated in makeButtons and used in handleEvents
+
+Texture airCraftCarrierTexture, battleShipTexture, submarineTexture, cruiserTexture, destroyerTexture;
+Sprite airCraftCarrier, battleShip, submarine, cruiser, destroyer;
+Sprite* draggedShip;
+Texture setShips;
+Texture gameBgTexture;
+Texture crossHairTexture;
+Texture pauseButtonTexture;
+Texture dialogBoxTexture;
+Texture LeaderBoardTexture;
+
+Texture youWonTexture;
+Texture settingTexture;
+Texture settingMenuTexture;
+
+VideoMode desktopsize = VideoMode::getDesktopMode();
+
+Event event;
+
+SoundBuffer clickSoundBuffer;
+SoundBuffer errorSoundBuffer;
+SoundBuffer DestructSoundBuffer;
+Sound clickSound;
+Sound errorSound;
+Sound destructSound;
+
 FloatRect playGlobal;
 FloatRect leaderboardGlobal;
 FloatRect exitGlobal;
@@ -43,14 +70,8 @@ FloatRect pauseContinue;
 FloatRect pauseMenu;
 FloatRect pauseExit;
 FloatRect fireGlobal;
+FloatRect musicRect, clickRect, errorRect, aimRect, delayRect, dectructRect;
 
-FloatRect musicRect, clickRect, errorRect;
-
-
-//FloatRect largestShipGlobal;
-//FloatRect largeShipGlobal;
-//FloatRect smallShipGlobal;
-//FloatRect smallestShipGlobal;
 bool shipCollision = false;
 bool beingDragged = false;
 bool shipInGrid = false;
@@ -61,7 +82,8 @@ int currentI = 0, currentJ = 0;
 int prevState = 0, newState = 0;
 int turn = 0;
 bool settingIconPressed = false;
-bool clickSoundOn = true, errorSoundOn = true, musicOn = true, aimConfirmOn = true, missileAnimationOn = true;
+bool settingsArray[5];
+bool clickSoundOn = 1, errorSoundOn = 1, musicOn = 1, aimConfirmOn = 1, destructionOn = 1;
 int cpuDelayTime = 1;
 
 int playerScore = 100, aiScore = 100;
@@ -79,15 +101,12 @@ bool didYouWin = false;
 string userName;
 
 
+//FloatRect largestShipGlobal;
+//FloatRect largeShipGlobal;
+//FloatRect smallShipGlobal;
+//FloatRect smallestShipGlobal;
 
-VideoMode desktopsize = VideoMode::getDesktopMode();
 
-Event event;
-
-SoundBuffer clickSoundBuffer;
-SoundBuffer errorSoundBuffer;
-Sound clickSound;
-Sound errorSound;
 
 int userArray[10][10] = { 0 };
 
@@ -134,7 +153,7 @@ int main() {
 	VideoMode desktop = VideoMode::getDesktopMode();
 	RenderWindow window(desktop, "BATTLESHIPS", Style::Fullscreen);
 	window.clear(Color(0, 0, 0));
-
+	window.display();
 	//Loading Textures & Fonts
 
 	if (!mainLoading.loadFromFile("Made Without Unity.png"))
@@ -159,22 +178,57 @@ int main() {
 
 	shipsInArray(aiGrid, aimed);
 
-	cout << "Player Score = " << playerScore << "AI Score : " << aiScore <<"UserName = "<<userName<< endl;
 }
 
-Texture airCraftCarrierTexture, battleShipTexture, submarineTexture, cruiserTexture, destroyerTexture;
-Sprite airCraftCarrier, battleShip, submarine, cruiser, destroyer;
-Sprite* draggedShip;
-Texture setShips;
-Texture gameBgTexture;
-Texture crossHairTexture;
-Texture pauseButtonTexture;
-Texture dialogBoxTexture;
-Texture LeaderBoardTexture;
+bool readSettings() {
+	ifstream settingRead("settingsMemory.txt");
 
-Texture youWonTexture;
-Texture settingTexture;
-Texture settingMenuTexture;
+	if (!settingRead.is_open()) {
+		return 0;
+	}
+
+	for (int i = 0; i < 5; i++) {
+		if (!(settingRead >> settingsArray[i])) {
+			cerr << "Error: Failed to read setting " << i << " from file!" << endl;
+			return 0;
+		}
+	}
+	if (!(settingRead >> cpuDelayTime)) {
+		cerr << "Error: Failed to read cpuDelayTime from file!" << endl;
+		return 0;
+	}
+	musicOn = settingsArray[0];
+	clickSoundOn = settingsArray[1];
+	errorSoundOn = settingsArray[2];
+	destructionOn = settingsArray[3];
+	aimConfirmOn  = settingsArray[4];
+	cout << "I'm done";
+
+	settingRead.close();
+
+	return 1;
+}
+
+bool writeSettings() {
+	ofstream settingsWrite("settingsMemory.txt");
+	if (!settingsWrite.is_open()) {
+		return 0;
+	}
+	settingsArray[0] = musicOn;
+		settingsArray[1] = clickSoundOn;
+		settingsArray[2] = errorSoundOn;
+		settingsArray[3] = destructionOn;
+		settingsArray[4] = aimConfirmOn;
+	for (int i = 0; i < 6; i++) {
+		if (i < 5)
+			settingsWrite << settingsArray[i]<<" ";
+		else
+			settingsWrite << cpuDelayTime;
+	}
+
+	settingsWrite.close();
+	return 1;
+}
 
 int loadEverything() {
 	if (!airCraftCarrierTexture.loadFromFile("airCraftCarrierTexture.png") || !battleShipTexture.loadFromFile("battleShipTexture.png") || !submarineTexture.loadFromFile("submarineTexture.png") || !cruiserTexture.loadFromFile("cruiserTexture.png") || !destroyerTexture.loadFromFile("destroyerTexture.png"))
@@ -241,6 +295,15 @@ int loadEverything() {
 	{
 		return -1;
 	}
+	if (!readSettings())
+	{
+		return -1;
+	}
+	/*if (!DestructSoundBuffer.loadFromFile("destruction.WAV"))
+	{
+		return -1;
+	}
+	destructSound.setBuffer(DestructSoundBuffer);*/
 
 	return 0;
 }
@@ -347,7 +410,6 @@ void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, 
 	}
 }
 
-
 void handleDrag(RenderWindow& window, Event& event, int width, int height) {
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
@@ -414,12 +476,12 @@ void handleDrag(RenderWindow& window, Event& event, int width, int height) {
 
 					draggedShip->setPosition(snappedX + 2 + bounds.width / 2, snappedY + 2 + bounds.height / 2);
 
-					clickSound.play();
+					if(clickSoundOn) clickSound.play();
 				}
 				else
 				{
 					draggedShip->setPosition(InitialPos);
-					errorSound.play();
+					if(errorSoundOn) errorSound.play();
 				}
 
 				shipInitialPos = true;
@@ -484,10 +546,11 @@ void handleDrag(RenderWindow& window, Event& event, int width, int height) {
 			if (shipCollision) {
 				selectedShip->setRotation(initialRotation);
 				selectedShip->setPosition(InitialPos);
-				errorSound.play();
+				if(errorSoundOn)
+					errorSound.play();
 			}
 			else
-				clickSound.play();
+				if(clickSoundOn) clickSound.play();
 
 		}
 		
@@ -514,7 +577,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				if (pauseButtonPressed) {
 					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 						window.close();
 
 					}
@@ -523,7 +586,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						pauseContinue = temp;
 						pauseButtonPressed = false;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 					if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
@@ -533,7 +596,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						pauseButtonPressed = false;
 						resetShips();
 						//generate new grid here
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 				}
 				else {
@@ -542,11 +605,12 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						{
 							FloatRect temp;
 							shipSetPlayGlobal = temp;
-							clickSound.play();
+							if(clickSoundOn) clickSound.play();
 							screenManager = 2;
 						}
 						else
-							errorSound.play();
+							if(errorSoundOn) 
+								errorSound.play();
 					}
 				}
 
@@ -558,21 +622,21 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				if (exitGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
 					window.close();
-					clickSound.play();
+					if(clickSoundOn) clickSound.play();
 				}
 				else if (playGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
 					FloatRect temp;
 					playGlobal = temp;
 					screenManager = 1;
-					clickSound.play();
+					if(clickSoundOn) clickSound.play();
 				}
 				else if (leaderboardGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
 					FloatRect temp;
 					playGlobal = temp;
 					screenManager = 3;
-					clickSound.play();
+					if(clickSoundOn) clickSound.play();
 				}
 			}
 			if (settingIconPressed)
@@ -586,14 +650,14 @@ int handleEvents(RenderWindow& window, int screenManager) {
 					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
 						window.close();
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 					if (pauseContinue.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
 						FloatRect temp;
 						pauseContinue = temp;
 						pauseButtonPressed = false;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 					if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
@@ -602,7 +666,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						screenManager = 0;
 						pauseButtonPressed = false;
 						resetShips();
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 				}
 				if (didYouWin) {
@@ -611,7 +675,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						leaderboardGlobal = temp;
 						screenManager = 3;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 						didYouWin = false;
 						resetShips();
 					}
@@ -620,7 +684,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						playGlobal = temp;
 						screenManager = 0;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 						didYouWin = false;
 						resetShips();
 					}
@@ -649,7 +713,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				if (pauseButtonPressed) {
 					if (pauseExit.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 						window.close();
 
 					}
@@ -658,7 +722,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						pauseContinue = temp;
 						pauseButtonPressed = false;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 					if (pauseMenu.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
@@ -666,7 +730,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						pauseMenu = temp;
 						screenManager = 0;
 						pauseButtonPressed = false;
-						clickSound.play();
+						if(clickSoundOn) clickSound.play();
 					}
 				}
 
@@ -680,17 +744,48 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				{
 					musicOn = !musicOn;
 					if (clickSoundOn)
-						clickSound.play();
+						 clickSound.play();
 				}
 				else if (clickRect.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
 					clickSoundOn = !clickSoundOn;
 					if (clickSoundOn)
-						clickSound.play();
+						 clickSound.play();
 				}
 				else if (errorRect.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
 					errorSoundOn = !errorSoundOn;
+					if (clickSoundOn)
+						clickSound.play();
+				}
+				else if (aimRect.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					aimConfirmOn = !aimConfirmOn;
+					if (clickSoundOn)
+						clickSound.play();
+				}
+				else if (dectructRect.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					destructionOn = !destructionOn;
+					if (clickSoundOn)
+						clickSound.play();
+				}
+				else if (delayRect.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					if (cpuDelayTime < 2)
+						cpuDelayTime++;
+					else
+						cpuDelayTime = 0;
+					if (clickSoundOn)
+						clickSound.play();
+				}
+				else if (exitGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+				{
+					writeSettings();
+					FloatRect temp;
+					exitGlobal = temp;
+					settingIconPressed = false;
+					screenManager = 0;
 					if (clickSoundOn)
 						clickSound.play();
 				}
@@ -701,7 +796,6 @@ int handleEvents(RenderWindow& window, int screenManager) {
 	}
 	return screenManager;
 }
-
 
 //Displays the Main Menu
 void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFont) {
@@ -787,7 +881,7 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 		Vector2i mousePos = Mouse::getPosition(window);
 		if (button.getGlobalBounds().contains(static_cast<Vector2f>(mousePos))) {
 			std::cout << "Button clicked!" << std::endl;
-			clickSound.play();
+			if(clickSoundOn) clickSound.play();
 		}
 	}*/
 
@@ -986,6 +1080,7 @@ void aiFire(int playerGrid[10][10]) {
 		if (playerGrid[y][x] == 0) {
 			playerGrid[y][x] = -1; // Mark as missed
 			cout << "Missed." << endl;
+			aiScore--;
 		}
 		else if (playerGrid[y][x] > 0) {
 			// Ship hit
@@ -1022,6 +1117,7 @@ void aiFire(int playerGrid[10][10]) {
 
 				if (playerGrid[newY][newX] == 0) {
 					playerGrid[newY][newX] = -1; // Mark as missed
+					aiScore--;
 					cout << "Missed." << endl;
 					currentCount++;
 					break;
@@ -1064,6 +1160,7 @@ void aiFire(int playerGrid[10][10]) {
 				if (playerGrid[newY][newX] == 0) {
 					playerGrid[newY][newX] = -1; // Mark as missed
 					cout << "Missed." << endl;
+					aiScore--;
 					targetMode = false; // Exit targeting mode if the end is reached
 					directionConfirmation = false;
 				}
@@ -1155,8 +1252,12 @@ bool destroyedShips(RenderWindow& window, int aiGrid[10][10], Sprite& ship, int 
 				count++;
 		}
 	}
-	if (count == 0) 
+	if (count == 0) {
 		return true;
+		if (destructionOn) {
+			destructSound.play();
+		}
+	}
 	return false;
 }
 
@@ -1168,10 +1269,11 @@ bool handlePlayerInput(sf::RenderWindow& window, Sprite& crossHair, int aiGrid[1
 			rect.setPosition(Vector2f(startingPointX2 + (boxsize * j), startingPointY + (boxsize * i)));
 
 			if (rect.getGlobalBounds().contains(mousePos)&& Mouse::isButtonPressed(Mouse::Left)&& aiGrid[i][j] >= 0) {
-				
-						/*playerFire(i, j, aiGrid[i][j], aiGrid);
-						return true;*/
-						aimed[i][j] = true;
+				if (!aimConfirmOn) {
+					playerFire(i, j, aiGrid[i][j], aiGrid);
+					return true;
+				}
+				aimed[i][j] = true;
 			}
 
 			if (aimed[i][j] && oneAtATime(aimed)) {
@@ -1366,7 +1468,7 @@ static sf::Clock turnClock;
 	}
 	case 1: {
 		// Short delay after player's turn for smooth transition
-		if (turnClock.getElapsedTime().asSeconds() > 0.5f) {
+		if (turnClock.getElapsedTime().asSeconds() > cpuDelayTime) {
 			turn = 2;
 		}
 		break;
@@ -1428,7 +1530,8 @@ void pauseButton(RenderWindow& window) {
 
 	if (pause.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
 		
-		clickSound.play();
+		if (clickSoundOn)
+			clickSound.play();
 		pauseButtonPressed = true;
 	}
 
@@ -1466,7 +1569,8 @@ void settings(RenderWindow& window) {
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
 	if (settingIcon.getGlobalBounds().contains(mousePos) && Mouse::isButtonPressed(Mouse::Left)) {
-		clickSound.play();
+		if(clickSoundOn)
+			clickSound.play();
 		settingIconPressed = true;
 	}
 }
@@ -1478,12 +1582,12 @@ void settingsMenu(RenderWindow& window) {
 	window.clear();
 	window.draw(settings);
 
-	string music, click, error, aimConfirm, cpuDelay, missileAnimation;
+	string music, click, error, aimConfirm, cpuDelay, destruct;
 	musicOn ? music = "ON" : music = "OFF";
 	clickSoundOn ? click = "ON" : click = "OFF";
 	errorSoundOn ? error = "ON" : error = "OFF";
 	aimConfirmOn ? aimConfirm = "ON" : aimConfirm = "OFF";
-	missileAnimationOn ? missileAnimation = "ON" : missileAnimation = "OFF";
+	destructionOn ? destruct = "ON" : destruct = "OFF";
 	if (cpuDelayTime == 1)
 		cpuDelay = "1 sec";
 	else if (cpuDelayTime == 2)
@@ -1491,8 +1595,13 @@ void settingsMenu(RenderWindow& window) {
 	else cpuDelay = "0 sec";
 	
 	musicRect = makeButtons(window, mainFont, music, 100, 75, 325, desktopsize.width / 3);
-	clickRect = makeButtons(window, mainFont, click, 100, 75, 325 + 265, desktopsize.width / 3);
-	errorRect = makeButtons(window, mainFont, error, 100, 75, 325 + 265 + 265, desktopsize.width / 3);
+	clickRect = makeButtons(window, mainFont, click, 100, 75, 325 + 210, desktopsize.width / 3);
+	errorRect = makeButtons(window, mainFont, error, 100, 75, 325 + 210 + 210, desktopsize.width / 3);
+
+	dectructRect = makeButtons(window, mainFont, destruct, 100, 75, 325, desktopsize.width / 1.25);
+	aimRect = makeButtons(window, mainFont, aimConfirm, 100, 75, 325 + 210, desktopsize.width / 1.25);
+	delayRect = makeButtons(window, mainFont, cpuDelay, 100, 75, 325 + 210 + 210, desktopsize.width / 1.25);
+	exitGlobal = makeButtons(window, mainFont, "Back", 175, 70, desktopsize.height/1.1, 0);
 
 
 	window.display();
