@@ -1,259 +1,133 @@
-//#include<iostream>
-//#include <cstdlib> // For rand() and srand()
-//#include <ctime>   // For time()
+////#include <iostream>
+////#include <cstdlib>
+////#include <ctime>
+////using namespace std;
+////
+////const int GRID_SIZE = 10;
+////const int NUM_SHIPS = 5;
+////const int SHIP_SIZES[NUM_SHIPS] = { 5, 4, 3, 3, 2 }; // Carrier, Battleship, Cruiser, Submarine, Destroyer
+////const int SHIP_VALUES[NUM_SHIPS] = { 1, 2, 3, 4, 5 };
+////void initializeGrid(int grid[GRID_SIZE][GRID_SIZE]) {
+////    for (int i = 0; i < GRID_SIZE; ++i) {
+////        for (int j = 0; j < GRID_SIZE; ++j) {
+////            grid[i][j] = 0;
+////        }
+////    }
+////}
+////
+////bool canPlaceShip(int grid[GRID_SIZE][GRID_SIZE], int x, int y, int size, bool horizontal) {
+////    if (horizontal) {
+////        if (y + size > GRID_SIZE) return false;
+////        for (int i = 0; i < size; ++i) {
+////            if (grid[x][y + i] != 0) return false;
+////        }
+////    }
+////    else {
+////        if (x + size > GRID_SIZE) return false;
+////        for (int i = 0; i < size; ++i) {
+////            if (grid[x + i][y] != 0) return false;
+////        }
+////    }
+////    return true;
+////}
+////
+////void placeShip(int grid[GRID_SIZE][GRID_SIZE], int x, int y, int size, bool horizontal, int arrayAccess) {
+////    if (horizontal) {
+////        for (int i = 0; i < size; ++i) {
+////            grid[x][y + i] = SHIP_VALUES[arrayAccess];
+////        }
+////    }
+////    else {
+////        for (int i = 0; i < size; ++i) {
+////            grid[x + i][y] = SHIP_VALUES[arrayAccess];
+////        }
+////    }
+////}
+////
+////void generateAIBoard(int grid[GRID_SIZE][GRID_SIZE]) {
+////    srand(static_cast<unsigned>(time(0)));
+////    for (int i = 0; i < NUM_SHIPS; ++i) {
+////        int size = SHIP_SIZES[i];
+////        bool placed = false;
+////        while (!placed) {
+////            int x = rand() % GRID_SIZE;
+////            int y = rand() % GRID_SIZE;
+////            bool horizontal = rand() % 2 == 0;
+////            if (canPlaceShip(grid, x, y, size, horizontal)) {
+////                placeShip(grid, x, y, size, horizontal, i);
+////                placed = true;
+////            }
+////        }
+////    }
+////}
+////
+////void printGrid(int grid[GRID_SIZE][GRID_SIZE]) {
+////    for (int i = 0; i < GRID_SIZE; ++i) {
+////        for (int j = 0; j < GRID_SIZE; ++j) {
+////            cout << grid[i][j] << " ";
+////        }
+////        cout << endl;
+////    }
+////}
+////
+////int main() {
+////    int grid[GRID_SIZE][GRID_SIZE];
+////    initializeGrid(grid);
+////    generateAIBoard(grid);
+////    printGrid(grid);
+////
+////    return 0;
+////}
+//
+//#include <iostream>
+//#include <fstream>
+//#include <vector>
+//#include <string>
+//#include <tuple>
+//#include <algorithm>
+//
 //using namespace std;
+//
 //int main() {
-//	cout << "Hello";
-//}
-////some global variables that are to be used
-//int actualPlayerGrid[10][10] = { 0 };
-//int attackCoordX, attackCoordY, sizeAttack; // global variables that store the ai attack coordinates and the "size" of the ship being attacked
-//bool directionConfirmation; //  specifies whether or not the direction is confirmed
-//int currentCount = 0; // specifies what the count of loop is being run on the ai mode
-//int shipValueTargetted; // classifies the type of ship being targetted
-//int directionToTarget = 0; // 1 for north, 2 for east, 3 for south, 4 for west
-//bool targetMode = false;
+//    ifstream file("leaderboardFile.txt");
+//    if (!file) {
+//        cerr << "Unable to open file." << endl;
+//        return 1;
+//    }
 //
-//void playerFire(int x, int y, int aiGrid[10][10]) {
-//	if (aiGrid[x][y] < 0) {
-//		cout << "Try again"; // invalid input handle
-//	}
-//	if (aiGrid[x][y] == 0) {
-//		aiGrid[x][y] = -1;
-//		cout << "Missed!"; // replace box with red coloration
-//	}
-//	if (aiGrid[x][y] == 1) {
-//		aiGrid[x][y] = -10; // destroyer value replacement
-//	}
-//	if (aiGrid[x][y] == 2) {
-//		aiGrid[x][y] = -9; // warship
-//	}
-//	if (aiGrid[x][y] == 3) {
-//		aiGrid[x][y] = -8; // sub
-//	}
-//	if (aiGrid[x][y] == 4) {
-//		aiGrid[x][y] = -7; // battleship
-//	}
-//	if (aiGrid[x][y] == 5) {
-//		aiGrid[x][y] = -6; // carrier idk
-//	}
-//}
+//    vector<pair<string, int>> leaderboard;
+//    string username;
+//    int score;
 //
-//void aiFire(int playerGrid[10][10]) {
-//	srand(static_cast<unsigned>(time(0)));
-//	int x = rand() % 10;
-//	int y = rand() % 10;
-//	while (playerGrid[y][x] < 0) { // invalid input handle
-//		x = rand() % 10;
-//		y = rand() % 10;
-//	}
-//	if (targetMode == false) {
-//		if (playerGrid[y][x] == 0) {
-//			playerGrid[y][x] = -1;
-//			cout << "Missed!"; // replace box with red coloration
-//		}
-//		if (playerGrid[y][x] == 1) {
-//			playerGrid[y][x] = -10; // destroyer value replacement
-//			attackCoordX = x;
-//			attackCoordY = y;
-//			targetMode = true;
-//			sizeAttack = 5 - 1;
-//			shipValueTargetted = 1;
-//		}
-//		if (playerGrid[y][x] == 2) {
-//			playerGrid[y][x] = -9; // warship
-//			attackCoordX = x;
-//			attackCoordY = y;
-//			targetMode = true;
-//			sizeAttack = 4 - 1;
-//			shipValueTargetted = 2;
-//		}
-//		if (playerGrid[y][x] == 3) {
-//			playerGrid[y][x] = -8; // sub
-//			attackCoordX = x;
-//			attackCoordY = y;
-//			targetMode = true;
-//			sizeAttack = 3 - 1;
-//			shipValueTargetted = 3;
-//		}
-//		if (playerGrid[y][x] == 4) {
-//			playerGrid[y][x] = -7; // battleship
-//			attackCoordX = x;
-//			attackCoordY = y;
-//			targetMode = true;
-//			sizeAttack = 3 - 1;
-//			shipValueTargetted = 4;
-//		}
-//		if (playerGrid[y][x] == 5) {
-//			playerGrid[y][x] = -6; // carrier idk
-//			attackCoordX = x;
-//			attackCoordY = y;
-//			targetMode = true;
-//			sizeAttack = 2 - 1;
-//			shipValueTargetted = 5;
-//		}
-//	}
-//	if (targetMode == true) {
-//		if (directionConfirmation == false) {
+//    // Read the file and store usernames and scores in a vector
+//    while (getline(file, username) && file >> score && file.ignore()) {
+//        leaderboard.push_back(make_pair(username, score));
+//    }
 //
-//			if (currentCount == 0) {
-//				attackCoordY--;
-//				if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
-//					directionConfirmation = true;
-//					directionToTarget = 1; // sets the direction to be north.
-//					currentCount = 0; // resetting the targetting process
-//					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
-//					sizeAttack--; //decrements the size of ships being attacked for this specific one.
-//					cout << "Hit.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
-//					directionConfirmation = false;
-//					playerGrid[attackCoordY][attackCoordX] = -1;
-//					attackCoordY++;
-//					cout << "Miss.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
-//					int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
-//					playerGrid[attackCoordY][attackCoordX] = -11 + temp;
-//					currentCount++;
-//				}
-//				else if (attackCoordY < 0) { // handles if the coordinate is out of bounds.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//			}
+//    file.close();
 //
-//			if (currentCount == 1) {
-//				attackCoordX++; // to check the right side
-//				attackCoordY++; // to undo the decrement in previous block
+//    // Sort the leaderboard based on scores in descending order
+//    sort(leaderboard.begin(), leaderboard.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
+//        return a.second > b.second;
+//        });
 //
-//				if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
-//					directionConfirmation = true;
-//					directionToTarget = 2; // sets the direction to be east.
-//					currentCount = 0; // resetting the targetting process
-//					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
-//					sizeAttack--; //decrements the size of ships being attacked for this specific one.
-//					cout << "Hit.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
-//					directionConfirmation = false;
-//					playerGrid[attackCoordY][attackCoordX] = -1;
-//					attackCoordX--;
-//					cout << "Miss.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
-//					int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
-//					playerGrid[attackCoordY][attackCoordX] = -11 + temp;
-//					currentCount++;
-//				}
-//				else if (attackCoordX > 9) { // handles if the coordinate is out of bounds.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//			}
+//    // Variables to store the top three scores and usernames
+//    tuple<string, int> topScore, midScore, bottomScore;
 //
-//			if (currentCount == 2) {
-//				attackCoordX--; //undoes the previous increment in the currentcount==1 block
-//				attackCoordY++; // now checks if the direction is in the south.
-//				if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
-//					directionConfirmation = true;
-//					directionToTarget = 3; // sets the direction to be south.
-//					currentCount = 0; // resetting the targetting process
-//					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
-//					sizeAttack--; //decrements the size of ships being attacked for this specific one.
-//					cout << "Hit.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
-//					directionConfirmation = false;
-//					playerGrid[attackCoordY][attackCoordX] = -1;
-//					attackCoordY--;
-//					cout << "Miss.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
-//					int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
-//					playerGrid[attackCoordY][attackCoordX] = -11 + temp;
-//					currentCount++;
-//				}
-//				else if (attackCoordY > 9) { // handles if the coordinate is out of bounds.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//			}
+//    if (leaderboard.size() >= 1) {
+//        topScore = make_tuple(leaderboard[0].first, leaderboard[0].second);
+//    }
+//    if (leaderboard.size() >= 2) {
+//        midScore = make_tuple(leaderboard[1].first, leaderboard[1].second);
+//    }
+//    if (leaderboard.size() >= 3) {
+//        bottomScore = make_tuple(leaderboard[2].first, leaderboard[2].second);
+//    }
 //
-//			if (currentCount == 3) {
-//				attackCoordY--; //undoes the previous increment in the currentcount==2 block
-//				attackCoordX--; // now checks if the direction is in the west
-//				if (playerGrid[attackCoordY][attackCoordX] == shipValueTargetted) { // handles if the block is "correct"
-//					directionConfirmation = true;
-//					directionToTarget = 4; // sets the direction to be south.
-//					currentCount = 0; // resetting the targetting process
-//					playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted; // works for all types of ship values being targetted
-//					sizeAttack--; //decrements the size of ships being attacked for this specific one.
-//					cout << "Hit.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] == 0) { // handles if the block is empty and its missed
-//					directionConfirmation = false;
-//					playerGrid[attackCoordY][attackCoordX] = -1;
-//					attackCoordX++;
-//					cout << "Miss.";
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] < 0) { // handles if the block is already hit or its missed.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//				else if (playerGrid[attackCoordY][attackCoordX] > 0 && playerGrid[attackCoordY][attackCoordX] != shipValueTargetted) {
-//					int temp = playerGrid[attackCoordY][attackCoordX]; // handles if the block is filled with a ship of other type
-//					playerGrid[attackCoordY][attackCoordX] = -11 + temp;
-//					currentCount++;
-//				}
-//				else if (attackCoordX < 0) { // handles if the coordinate is out of bounds.
-//					currentCount++;
-//					aiFire(actualPlayerGrid);
-//				}
-//			}
-//		}
-//		if (sizeAttack == 0) {
-//			directionConfirmation = false;
-//			targetMode = false;
-//			cout << shipValueTargetted << " has been completely destroyed.\n";
-//		}
-//		if (directionConfirmation == true) {
-//			if (directionToTarget == 1) {
-//				attackCoordY--;
-//				playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
-//				sizeAttack--;
-//			}
-//			if (directionToTarget == 2) {
-//				attackCoordX++;
-//				playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
-//				sizeAttack--;
-//			}
-//			if (directionToTarget == 3) {
-//				attackCoordY++;
-//				playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
-//				sizeAttack--;
-//			}
-//			if (directionToTarget == 4) {
-//				attackCoordX--;
-//				playerGrid[attackCoordY][attackCoordX] = -11 + shipValueTargetted;
-//				sizeAttack--;
-//			}
-//			if (sizeAttack == 0) {
-//				targetMode = false;
-//				directionConfirmation = false;
-//			}
-//		}
-//	}
+//    // Print the top three scores and usernames
+//    cout << "Top Score: " << get<0>(topScore) << " - " << get<1>(topScore) << endl;
+//    cout << "Mid Score: " << get<0>(midScore) << " - " << get<1>(midScore) << endl;
+//    cout << "Bottom Score: " << get<0>(bottomScore) << " - " << get<1>(bottomScore) << endl;
+//
+//    return 0;
 //}

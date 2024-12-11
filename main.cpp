@@ -2,11 +2,16 @@
 #include <cstdlib> // For rand() and srand()
 #include <ctime>   // For time()
 #include<cmath>
+#include <cstdlib>
 #include <sstream>
 #include <thread> // For simulating resource loading
 #include <chrono>
 #include<fstream>
+#include <sstream>
 #include<vector>
+#include <string>
+#include <tuple>
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Network.hpp>
@@ -16,14 +21,13 @@
 using namespace std;
 using namespace sf;
 
-
 //function definitions:
 
 void openWindow(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int aiGrid[10][10], bool aimed[10][10]);
 int loadEverything();
-int handleEvents(RenderWindow& window, int screenManager);
+int handleEvents(RenderWindow& window, int screenManager, int aiGrid[10][10]);
 void drawMainScreen(RenderWindow& window, Texture& mainBgTexture, Font& mainFont);
-void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool leaderBoard);
+void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool leaderBoard, bool caseScenario = 0);
 FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int width, int height, int vertical, int horizontal);
 void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, int aiGrid[10][10], bool aimed[10][10], int screenManager);
 bool drawBoard(RenderWindow& window,int Array[10][10], int userNo, int height = 10, int width = 10);
@@ -48,10 +52,12 @@ Texture crossHairTexture;
 Texture pauseButtonTexture;
 Texture dialogBoxTexture;
 Texture LeaderBoardTexture;
+Texture youLostTexture;
 
 Texture youWonTexture;
 Texture settingTexture;
 Texture settingMenuTexture;
+Texture multiEndTexture;
 
 VideoMode desktopsize = VideoMode::getDesktopMode();
 
@@ -106,8 +112,16 @@ int shipValueTargetted; // classifies the type of ship being targetted
 int directionToTarget = 0; // 1 for north, 2 for east, 3 for south, 4 for west
 bool targetMode = false;
 bool didYouWin = false;
+bool didYouLose = false;
+bool multiEnded = false;
+bool multiOneWon = false;
+bool multiTwoWon = false;
 int multiGameState = 0;
 string userName;
+const int GRID_SIZE = 10;
+const int NUM_SHIPS = 5;
+const int SHIP_SIZES[NUM_SHIPS] = { 5, 4, 3, 3, 2 }; // Carrier, Battleship, Cruiser, Submarine, Destroyer
+const int SHIP_VALUES[NUM_SHIPS] = { 1, 2, 3, 4, 5 };
 
 
 //FloatRect largestShipGlobal;
@@ -243,7 +257,7 @@ bool writeSettings() {
 
 void writeLeaderBoard() {
 	ofstream leaderboarder("leaderboardFile.txt", ios::app);
-	leaderboarder << userName << "\t" << playerScore << "\n";
+	leaderboarder << userName << "\n" << playerScore << "\n";
 	leaderboarder.close();
 }
 
@@ -331,7 +345,26 @@ int loadEverything() {
 		return -1;
 	}
 	hitSound.setBuffer(hitSoundBuffer);
+	/*if (!bgMusic.openFromFile("bgMusiccc.waptt.WAV"))
+	{
+		return -1;
+	}
+	bgMusic.setLoop(true);
+	bgMusic.setVolume(50);
+	if(musicOn)
+		bgMusic.play();*/
 
+	if (!youLostTexture.loadFromFile("youLost.png"))
+	{
+		return -1;
+	}
+	if (!multiEndTexture.loadFromFile("multiEnd.png"))
+	{
+		return -1;
+	}
+
+
+	
 	return 0;
 }
 
@@ -409,10 +442,10 @@ void shipCreator() {
 void openWindow(RenderWindow& window, Texture& mainBgTexture,  Font& mainFont, int aiGrid[10][10], bool aimed[10][10]) {
 	int screenManager = 0;
 	shipCreator();
-	while (window.isOpen()) {
+		while (window.isOpen()) {
 		screenDecide(window, mainBgTexture, mainFont, aiGrid, aimed, screenManager);
-		screenManager = handleEvents(window, screenManager);
-	}
+		screenManager = handleEvents(window, screenManager, aiGrid);
+	 }
 }
 
 
@@ -438,6 +471,65 @@ void screenDecide(RenderWindow& window, Texture& mainBgTexture, Font& mainFont, 
 		multiGame(window, aiGrid, aimed);
 		break;
 	}
+}
+
+void initializeGrid(int grid[GRID_SIZE][GRID_SIZE]) {
+	for (int i = 0; i < GRID_SIZE; ++i) {
+		for (int j = 0; j < GRID_SIZE; ++j) {
+			grid[i][j] = 0;
+		}
+	}
+}
+
+bool canPlaceShip(int grid[GRID_SIZE][GRID_SIZE], int x, int y, int size, bool horizontal) {
+	if (horizontal) {
+		if (y + size > GRID_SIZE) return false;
+		for (int i = 0; i < size; ++i) {
+			if (grid[x][y + i] != 0) return false;
+		}
+	}
+	else {
+		if (x + size > GRID_SIZE) return false;
+		for (int i = 0; i < size; ++i) {
+			if (grid[x + i][y] != 0) return false;
+		}
+	}
+	return true;
+}
+
+void placeShip(int grid[GRID_SIZE][GRID_SIZE], int x, int y, int size, bool horizontal, int arrayAccess) {
+	if (horizontal) {
+		for (int i = 0; i < size; ++i) {
+			grid[x][y + i] = SHIP_VALUES[arrayAccess];
+		}
+	}
+	else {
+		for (int i = 0; i < size; ++i) {
+			grid[x + i][y] = SHIP_VALUES[arrayAccess];
+		}
+	}
+}
+
+void generateAIBoard(int grid[GRID_SIZE][GRID_SIZE]) {
+	srand(static_cast<unsigned>(time(0)));
+	for (int i = 0; i < NUM_SHIPS; ++i) {
+		int size = SHIP_SIZES[i];
+		bool placed = false;
+		while (!placed) {
+			int x = rand() % GRID_SIZE;
+			int y = rand() % GRID_SIZE;
+			bool horizontal = rand() % 2 == 0;
+			if (canPlaceShip(grid, x, y, size, horizontal)) {
+				placeShip(grid, x, y, size, horizontal, i);
+				placed = true;
+			}
+		}
+	}
+}
+
+void aiGridSetup(int aiGrid[10][10]) {
+	initializeGrid(aiGrid);
+	generateAIBoard(aiGrid);
 }
 
 void handleDrag(RenderWindow& window, Event& event, int Array[10][10], int userNo, int width, int height) {
@@ -589,7 +681,7 @@ void handleDrag(RenderWindow& window, Event& event, int Array[10][10], int userN
 }
 
 //Handles all the input Events
-int handleEvents(RenderWindow& window, int screenManager) {
+int handleEvents(RenderWindow& window, int screenManager, int aiGrid[10][10]) {
 	while (window.pollEvent(event)) {
 
 		Vector2i mousePos = Mouse::getPosition(window);
@@ -632,6 +724,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 					if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y)))) {
 						if (readyToPlay(10, 10, 17))
 						{
+							aiGridSetup(aiGrid);
 							FloatRect temp;
 							shipSetPlayGlobal = temp;
 							if(clickSoundOn) clickSound.play();
@@ -662,6 +755,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				}
 				else if (multiGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 				{
+					aiGridSetup(aiGrid);
 					FloatRect temp;
 					multiGlobal = temp;
 					screenManager = 5;
@@ -699,6 +793,8 @@ int handleEvents(RenderWindow& window, int screenManager) {
 					{
 						FloatRect temp;
 						pauseMenu = temp;
+						playerScore = 100;
+						aiScore = 100;
 						screenManager = 0;
 						pauseButtonPressed = false;
 						resetShips();
@@ -721,8 +817,23 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						playGlobal = temp;
 						screenManager = 0;
+						playerScore = 100;
+						aiScore = 100;
 						if(clickSoundOn) clickSound.play();
 						didYouWin = false;
+						resetShips();
+					}
+				}
+				if (didYouLose) {
+					if (playGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
+					{
+						FloatRect temp;
+						playGlobal = temp;
+						screenManager = 0;
+						playerScore = 100;
+						aiScore = 100;
+						if (clickSoundOn) clickSound.play();
+						didYouLose = false;
 						resetShips();
 					}
 				}
@@ -767,6 +878,7 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						pauseMenu = temp;
 						screenManager = 0;
 						pauseButtonPressed = false;
+						aiScore = playerScore = 100;
 						if(clickSoundOn) clickSound.play();
 					}
 				}
@@ -852,6 +964,9 @@ int handleEvents(RenderWindow& window, int screenManager) {
 						FloatRect temp;
 						pauseMenu = temp;
 						screenManager = 0;
+						multiGameState = 0;
+						playerScore = 100;
+						aiScore = 100;
 						pauseButtonPressed = false;
 						resetShips();
 						//generate new grid here
@@ -859,7 +974,6 @@ int handleEvents(RenderWindow& window, int screenManager) {
 					}
 				}
 				if (multiGameState == 0) {
-					handleDrag(window, event, userArray,1,10, 10);
 					if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
 						if (readyToPlay(10, 10, 17)) {
@@ -874,8 +988,6 @@ int handleEvents(RenderWindow& window, int screenManager) {
 					}
 				}
 				if (multiGameState == 1) {
-
-					handleDrag(window, event,secondArray, 2,10, 10);
 					if (shipSetPlayGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 					{
 						if (readyToPlay(10, 10, 17)) {
@@ -890,40 +1002,17 @@ int handleEvents(RenderWindow& window, int screenManager) {
 				}
 				if (multiGameState == 2) {
 				
-					if (didYouWin) {
-						if (leaderboardGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
-						{
-							FloatRect temp;
-							leaderboardGlobal = temp;
-							writeLeaderBoard();
-							screenManager = 3;
-							if (clickSoundOn) clickSound.play();
-							didYouWin = false;
-							resetShips();
-						}
+					if (multiEnded) {
 						if (playGlobal.contains((static_cast<float>(mousePos.x)), (static_cast<float>(mousePos.y))))
 						{
 							FloatRect temp;
 							playGlobal = temp;
 							screenManager = 0;
+							playerScore = aiScore = 100;
 							if (clickSoundOn) clickSound.play();
-							didYouWin = false;
+							multiEnded = multiOneWon = multiTwoWon = false;
+							multiGameState = 0;
 							resetShips();
-						}
-					}
-				}
-				if (didYouWin && event.type == sf::Event::TextEntered) {
-					// Handle ASCII characters only
-					if (event.text.unicode < 128) {
-						// Backspace handling
-						if (event.text.unicode == '\b') { // Backspace ASCII code
-							if (!userName.empty()) {
-								userName.pop_back(); // Remove last character
-							}
-						}
-						// Printable characters
-						else {
-							userName += static_cast<char>(event.text.unicode);
 						}
 					}
 				}
@@ -961,13 +1050,16 @@ void drawMainScreen(RenderWindow& window, Texture&  mainBgTexture, Font& mainFon
 }
 
 //Called in the makeButtons Function. Displays and Aligns the Text
-void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool leaderBoard) {
+void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal, int vertical, int width, int height, bool leaderBoard, bool caseScenario) {
 
 	Text text;
 	text.setFont(mainFont);
 	if(leaderBoard)
 		text.setStyle(Text::Bold);
+	
 	text.setCharacterSize(desktopsize.height / 24);
+
+
 	if (!leaderBoard) {
 		text.setCharacterSize(desktopsize.height / 24);
 		text.setFillColor(Color(0, 0, 50));//Bluish-Black
@@ -977,6 +1069,9 @@ void writeText(RenderWindow& window, string name, Font& mainFont, int horizontal
 		text.setFillColor(Color(239, 242, 255));//Button-white
 	}
 
+	if (caseScenario) {
+		text.setCharacterSize(desktopsize.height / 9);
+	}
 
 	text.setString(name);//Button name
 
@@ -1029,9 +1124,11 @@ FloatRect makeButtons(RenderWindow& window, Font& mainFont, string name, int wid
 	return button.getGlobalBounds();
 }
 
-  //////////////////////////////////////////////
- //////////////////////////////////////////////
+
 //////////////////////////////////////////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+
 
 bool readyToPlay(int rows, int columns, int shipWeight) {
 
@@ -1250,6 +1347,7 @@ void aiFire(int playerGrid[10][10]) {
 		if (playerGrid[y][x] == 0) {
 			playerGrid[y][x] = -1; // Mark as missed
 			cout << "Missed." << endl;
+			aiScore--;
 		}
 		else if (playerGrid[y][x] > 0) {
 			// Ship hit
@@ -1371,19 +1469,38 @@ void aiFire(int playerGrid[10][10]) {
 }
 
 void colorGrid(RenderWindow& window, RectangleShape& rect, int currentValue, bool user) {
-	if (currentValue < -1) {
-		rect.setFillColor(Color(110, 0, 0));
-	}
-	else if (currentValue == -1) {
-		rect.setFillColor(Color(70, 120, 160));
+	if (!musicOn) {
+		if (currentValue < -1) {
+			rect.setFillColor(Color(222, 0, 0));
+		}
+		else if (currentValue == -1) {
+			rect.setFillColor(Color(70, 114, 166));
+		}
+		else {
+			rect.setFillColor(Color(25, 25, 25, 255));
+		}
+
+		if (user) {
+			if (currentValue > 0) {
+				rect.setFillColor(Color(67, 68, 100, 255));
+			}
+		}
 	}
 	else {
-		rect.setFillColor(Color(25, 25, 25, 255));
-	}
+		if (currentValue < -1) {
+			rect.setFillColor(Color(79, 6, 1));
+		}
+		else if (currentValue == -1) {
+			rect.setFillColor(Color(27, 68, 212));
+		}
+		else {
+			rect.setFillColor(Color(25, 25, 25, 255));
+		}
 
-	if (user) {
-		if (currentValue > 0) {
-			rect.setFillColor(Color(50, 50, 100, 255));
+		if (user) {
+			if (currentValue > 0) {
+				rect.setFillColor(Color(50, 50, 100, 255));
+			}
 		}
 	}
 	window.draw(rect);
@@ -1411,7 +1528,7 @@ bool oneAtATime(bool aimed[10][10]) {
 	return count <= 1;
 }
 
-bool gameEnder(int aiGrid[10][10]) {
+int gameEnder(int aiGrid[10][10]) {
 	int userCount = 0, aiCount = 0;
 	for (int i = 0; i < 10; i++) {
 		for (int j = 0; j < 10; j++) {
@@ -1421,9 +1538,13 @@ bool gameEnder(int aiGrid[10][10]) {
 				aiCount++;
 		}
 	}
-	if (userCount == 17 || aiCount == 17)
-		return true;
-	return false;
+	//return 1;
+	//return 2;
+	if (userCount == 17)
+		return 2;
+	if (aiCount == 17)
+		return 1;
+	return 0;
 }
 
 bool destroyedShips(RenderWindow& window, int aiGrid[10][10], Sprite& ship, int shipNo) {
@@ -1577,7 +1698,7 @@ void renderGridScreen2(sf::RenderWindow& window, int aiGrid[10][10], int startX,
 					else
 						horizon = false;
 
-					one1 = transferShips(airCraftCarrier, startX, startY, boxsize, i, j, 274, 59, 5, horizon, 0);
+					one1 = transferShips(airCraftCarrier, startX, startY, boxsize, i, j, 274, 59, 5, horizon, 1);
 				}
 				else if (destroyedShips(window, aiGrid, battleShip, 2) && two1 && aiGrid[i][j] == -9) {
 					if (aiGrid[i][j + 1] == -9)
@@ -1585,7 +1706,7 @@ void renderGridScreen2(sf::RenderWindow& window, int aiGrid[10][10], int startX,
 					else
 						horizon = false;
 
-					two1 = transferShips(battleShip, startX, startY, boxsize, i, j, 219, 60, 4, horizon, 0);
+					two1 = transferShips(battleShip, startX, startY, boxsize, i, j, 219, 60, 4, horizon, 1);
 					
 				}
 				else if (destroyedShips(window, aiGrid, cruiser, 3) && three1 && aiGrid[i][j] == -8) {
@@ -1593,21 +1714,21 @@ void renderGridScreen2(sf::RenderWindow& window, int aiGrid[10][10], int startX,
 						horizon = true;
 					else
 						horizon = false;
-					three1 = transferShips(cruiser, startX, startY, boxsize, i, j, 163, 59, 3, horizon, 0);
+					three1 = transferShips(cruiser, startX, startY, boxsize, i, j, 163, 59, 3, horizon, 1);
 				}
 				else if (destroyedShips(window, aiGrid, submarine, 4) && four1 && aiGrid[i][j] == -7) {
 					if (aiGrid[i][j + 1] == -7)
 						horizon = true;
 					else
 						horizon = false;
-					four1 = transferShips(submarine, startX, startY, boxsize, i, j, 163, 59, 3, horizon, 0);
+					four1 = transferShips(submarine, startX, startY, boxsize, i, j, 163, 59, 3, horizon, 1);
 				}
 				else if (destroyedShips(window, aiGrid, destroyer, 5) && five1 && aiGrid[i][j] == -6) {
 					if (aiGrid[i][j + 1] == -6)
 						horizon = true;
 					else
 						horizon = false;
-					five1 = transferShips(destroyer, startX, startY, boxsize, i, j, 109, 60, 2, horizon, 0);
+					five1 = transferShips(destroyer, startX, startY, boxsize, i, j, 109, 60, 2, horizon, 1);
 				}
 
 			}
@@ -1656,8 +1777,8 @@ void drawBackgroundAndGrids(sf::RenderWindow& window, int aiGrid[10][10], int bo
 	}
 }
 
-void winScreen(RenderWindow& window, int aiGrid[10][10]) {
-	 if(didYouWin){
+void winScreen(RenderWindow& window) {
+	
 		Sprite youWin;
 		youWin.setTexture(youWonTexture);
 		youWin.setOrigin(Vector2f(youWin.getGlobalBounds().width / 2, youWin.getGlobalBounds().height / 2));
@@ -1667,6 +1788,40 @@ void winScreen(RenderWindow& window, int aiGrid[10][10]) {
 		playGlobal = makeButtons(window, mainFont, "Menu", desktopsize.width / 8, desktopsize.width / 22, desktopsize.height / 1.55, desktopsize.width / 2.9);
 		leaderboardGlobal = makeButtons(window, mainFont, "Enter", desktopsize.width / 8, desktopsize.width / 22, desktopsize.height / 1.55, desktopsize.width / 1.9);
 		window.display();
+}
+
+void loseScreen(RenderWindow& window) {
+	Sprite youLose;
+	youLose.setTexture(youLostTexture);
+	youLose.setOrigin(Vector2f(youLose.getGlobalBounds().width / 2, youLose.getGlobalBounds().height / 2));
+	youLose.setPosition(Vector2f(desktopsize.width / 2, desktopsize.height / 2));
+	window.draw(youLose);
+	playGlobal = makeButtons(window, mainFont, "Menu", desktopsize.width / 8, desktopsize.width / 22, desktopsize.height / 1.15, 0);
+	window.display();
+}
+
+void multiEnd(RenderWindow& window) {
+	Sprite youLose;
+	youLose.setTexture(multiEndTexture);
+	youLose.setOrigin(Vector2f(youLose.getGlobalBounds().width / 2, youLose.getGlobalBounds().height / 2));
+	youLose.setPosition(Vector2f(desktopsize.width / 2, desktopsize.height / 2));
+	window.draw(youLose);
+	if(multiOneWon)
+		writeText(window, "1", mainFont, desktopsize.width / 1.95, desktopsize.height / 2, 0, 0, 1, true);
+	else  if(multiTwoWon)
+		writeText(window, "2", mainFont, desktopsize.width / 1.95, desktopsize.height / 2, 0, 0, 1, true);
+	playGlobal = makeButtons(window, mainFont, "Menu", desktopsize.width / 8, desktopsize.width / 22, desktopsize.height / 1.1, 0);
+}
+
+void endScreen(RenderWindow& window, bool multi) {
+	if (!multi) {
+		if (didYouWin)
+			winScreen(window);
+		else if (didYouLose)
+			loseScreen(window);
+	}
+	else if(multiEnded){
+		multiEnd(window);
 	}
 }
 
@@ -1696,18 +1851,6 @@ void gamePlayScreen(RenderWindow& window, int otherArray[10][10], bool aimed[10]
 
 	Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 
-	if (!multiYes) {
-		if (oneTime) {
-			for (int i = 0; i < 10; i++) {
-				for (int j = 0; j < 10; j++) {
-					otherArray[i][j] = userArray[i][j];
-				}
-			}
-
-			oneTime = false;
-		}
-	}
-
 	drawBackgroundAndGrids(window, otherArray, boxsize, startingPointX1, startingPointX2, startingPointY, multiYes);
 
 static sf::Clock turnClock;
@@ -1716,7 +1859,7 @@ static sf::Clock turnClock;
 	case 0: {
 		// Allow player to aim and fire
 		Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
-		if (!pauseButtonPressed && !didYouWin) {
+		if (!pauseButtonPressed && !didYouWin && !didYouLose && !multiEnded) {
 			if (handlePlayerInput(window, crossHair, otherArray, aimed, mousePos, boxsize, startingPointX2, startingPointY, 0)) {
 				turn = 1;
 				turnClock.restart(); // Start delay timer for transition
@@ -1768,18 +1911,33 @@ static sf::Clock turnClock;
 		}
 		else {
 			writeText(window, "PLAYER 2", mainFont, centerAlign(desktopsize.width, 40) + 5, desktopsize.height / 14, 20, 0, true);
-
 		}
+
+
+		writeText(window, "Player 1", mainFont, desktopsize.width / 4.8, desktopsize.height / 10, 20, 0, true);
+
+		writeText(window, "Player 2", mainFont, desktopsize.width / 1.275 , desktopsize.height / 10, 20, 0, true);
 	}
 
-	winScreen(window, otherArray);
+	endScreen(window, multiYes);
 
 	if(!didYouWin)
 		pauseButton(window);
 
 	if (!multiYes) {
-		if (gameEnder(otherArray)) {
+		if (gameEnder(otherArray) == 1) {
 			didYouWin = true;
+		}
+		else if (gameEnder(otherArray) == 2) {
+			didYouLose = true;
+		}
+	}
+	else {
+		if (gameEnder(otherArray) == 1) {
+			multiEnded = multiOneWon = true;
+		}
+		else if (gameEnder(otherArray) == 2) {
+			multiEnded = multiTwoWon = true;
 		}
 	}
 
@@ -1821,19 +1979,70 @@ void pauseButton(RenderWindow& window) {
 
 void leaderBoardScreen(RenderWindow& window) {
 
-	Sprite leaderboard;
+	Sprite leaderBoard;
 	string first = "Placeholder1", second = "Placeholder2", third = "Placeholder3";
-	leaderboard.setTexture(LeaderBoardTexture);
-	leaderboard.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
+	leaderBoard.setTexture(LeaderBoardTexture);
+	leaderBoard.scale(static_cast<float>(desktopsize.width) / 1920.0, static_cast<float>(desktopsize.height) / 1080.0);
 
 	//@rafeel idhr se shuru hoja
 
-	ofstream leaderbooardReader("leaderboardFile");
+	ifstream file("leaderboardFile.txt");
+	if (!file) {
+		cerr << "Unable to open file." << endl;
+	}
+
+	vector<pair<string, int>> leaderboard;
+	string username;
+	int score;
+
+	while (getline(file, username) && file >> score && file.ignore()) {
+		leaderboard.push_back(make_pair(username, score));
+	}
+
+	// Sort the leaderboard based on scores in descending order
+	sort(leaderboard.begin(), leaderboard.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
+		return a.second > b.second;
+		});
+
+	// Variables to store the top three scores and usernames
+	tuple<string, int> topScore, midScore, bottomScore;
+
+	if (leaderboard.size() >= 1) {
+		topScore = make_tuple(leaderboard[0].first, leaderboard[0].second);
+	}
+	if (leaderboard.size() >= 2) {
+		midScore = make_tuple(leaderboard[1].first, leaderboard[1].second);
+	}
+	if (leaderboard.size() >= 3) {
+		bottomScore = make_tuple(leaderboard[2].first, leaderboard[2].second);
+	}
+
+
+	String firstName, secondName, thirdName, firstScore, secondScore, thirdScore;
+	firstName = get<0>(topScore);
+	secondName = get<0>(midScore);
+	thirdName = get<0>(bottomScore);
+
+	firstName = firstName + "\t\t";
+	secondName = secondName + "\t\t";
+	thirdName = thirdName + "\t\t";
+
+	firstScore = to_string(get<1>(topScore));
+	secondScore = to_string(get<1>(midScore));
+	thirdScore = to_string(get<1>(bottomScore));
+
+	first = firstName + firstScore;
+	second = secondName + secondScore;
+	third = thirdName + thirdScore;
+
+	/*first = tupleToString(topScore);
+	second = tupleToString(midScore);
+	third = tupleToString(bottomScore);*/
 
 	//@rafeel idhr khatam hoja
 
 	window.clear();
-	window.draw(leaderboard);
+	window.draw(leaderBoard);
 	writeText(window, first, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 2.48, 20, 0, true);
 	writeText(window, second, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 1.7, 20, 0, true);
 	writeText(window, third, mainFont, centerAlign(desktopsize.width, 40), desktopsize.height / 1.29, 20, 0, true);
@@ -1895,12 +2104,12 @@ void multiGame(RenderWindow& window, int secondArray[10][10], bool aimed[10][10]
 	window.clear();
 	if (multiGameState == 0) {
 		drawBoard(window, userArray, 1, 10, 10);
-		handleDrag(window, event, userArray, 1 ,10, 10);
+		handleDrag(window, event, userArray, 1, 10, 10);
 	}
 	else if (multiGameState == 1) {
 		drawBoard(window, secondArray, 2, 10, 10);
-		handleDrag(window, event, secondArray, 2 ,10, 10);
-	} 
+		handleDrag(window, event, secondArray, 2, 10, 10);
+	}
 	else if (multiGameState == 2)
 		gamePlayScreen(window, secondArray, aimed, 1, 10, 10);
 	window.display();
